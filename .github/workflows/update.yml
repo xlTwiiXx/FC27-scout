@@ -29,23 +29,24 @@ jobs:
         run: node update.mjs
         env:
           FORCE_ALL: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
-      - name: Ereignisse holen (SBCs, EA-Meldungen)
+      - name: Leaks holen (X)
         if: always()
-        run: node events.mjs
+        run: node leaks.mjs
         continue-on-error: true
       - name: Speichern
         if: always()
         run: |
           git config user.name "scout-bot"
           git config user.email "scout-bot@users.noreply.github.com"
-          git add prices*.json events.json
+          FILES=$(ls prices*.json leaks.json 2>/dev/null | tr '\n' ' ')
+          git add $FILES
           git diff --cached --quiet && { echo "Nichts zu speichern"; exit 0; }
-          mkdir -p /tmp/keep && cp prices*.json events.json /tmp/keep/
+          mkdir -p /tmp/keep && cp $FILES /tmp/keep/
           for i in 1 2 3; do
             git fetch -q origin main
             git reset -q --hard origin/main
             cp /tmp/keep/* .
-            git add prices*.json events.json
+            git add $FILES
             git diff --cached --quiet && { echo "Schon aktuell"; exit 0; }
             git commit -q -m "Daten aktualisiert"
             git push -q && { echo "Gespeichert"; exit 0; }
