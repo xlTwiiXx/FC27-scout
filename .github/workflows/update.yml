@@ -2,11 +2,12 @@ name: update-prices
 
 on:
   schedule:
-    - cron: "*/15 * * * *"   # alle 15 Minuten (UTC)
-  workflow_dispatch:         # manueller Start
+    - cron: "*/15 * * * *"   # Sicherheitsnetz: startet den Dauerlauf, falls er gerade nicht laeuft
+  workflow_dispatch:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: scout-data          # es laeuft immer nur ein Lauf; ein weiterer wartet
@@ -14,11 +15,12 @@ concurrency:
 
 env:
   DATA_DIR: data
+  GH_REPO: ${{ github.repository }}
 
 jobs:
   run:
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -46,36 +48,7 @@ jobs:
           npm install --no-save playwright@1.48.2
           npx playwright install --with-deps chromium
 
-      - name: Preise holen
-        run: node update.mjs
-        env:
-          FORCE_ALL: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
-
-      - name: Leaks holen (X, einmal pro Stunde)
-        if: always()
-        continue-on-error: true
-        run: |
-          if [ "$(date -u +%M)" -lt 15 ] || [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            node leaks.mjs
-          else
-            echo "Leaks werden nur einmal pro Stunde geholt."
-          fi
-
-      - name: Speichern (Branch data, ohne Verlauf)
-        if: always()
+      - name: Dauerlauf (alle 15 Minuten, ca. 5,5 Stunden)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cd "$DATA_DIR"
-          if [ ! -f prices.json ]; then echo "Keine Daten zum Speichern"; exit 0; fi
-          git init -q -b data
-          git config user.name "scout-bot"
-          git config user.email "scout-bot@users.noreply.github.com"
-          git add -A
-          git commit -q -m "Daten $(date -u +%FT%TZ)"
-          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          for i in 1 2 3; do
-            git push -q -f origin data && { echo "Gespeichert"; exit 0; }
-            sleep 5
-          done
-          exit 1
+        run: bash loop.sh
