@@ -93,6 +93,7 @@ async function directPage(ctx, url) {
         if (!am) continue;
         seen.add(m[1]);
         out.push({ id: m[1], name: am[1], rating: +am[2], version: am[3], url: a.href,
+          im: img ? (img.currentSrc || img.src || img.getAttribute('data-src') || '') : '',
           lines: a.innerText.split('\n').map((s) => s.trim()).filter(Boolean) });
       }
       return out;
@@ -100,7 +101,7 @@ async function directPage(ctx, url) {
     const cards = [];
     for (const c of raw) {
       const x = parseLines(c.lines);
-      if (x) cards.push({ id: c.id, name: c.name.trim(), rating: c.rating, version: c.version.trim(), pos: x.pos, price: x.price, url: c.url });
+      if (x) cards.push({ id: c.id, name: c.name.trim(), rating: c.rating, version: c.version.trim(), pos: x.pos, price: x.price, url: c.url, im: (c.im.split('futgg-player-item-card/')[1] || '').split('?')[0] });
     }
     return { cards, title, status };
   } catch (e) {
@@ -208,6 +209,7 @@ async function runJob(job) {
       seen.add(c.id);
       const e = db.cards[c.id] || { h: [], fs: popAtStart >= 200 ? t : 0 };
       Object.assign(e, { name: c.name, rating: c.rating, version: c.version, pos: c.pos, url: c.url });
+      if (c.im) e.im = c.im;
       e.h.push([t, c.price]);
       db.cards[c.id] = e;
     }

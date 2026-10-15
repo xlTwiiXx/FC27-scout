@@ -9,6 +9,7 @@ INTERVAL="${INTERVAL:-900}"             # 15 Minuten
 REMOTE_URL="${REMOTE_URL:-https://x-access-token:${GH_TOKEN:-}@github.com/${GITHUB_REPOSITORY:-}.git}"
 END=$(( $(date +%s) + LOOP_SECONDS ))
 LAST_LEAK_HOUR=""
+LAST_CATALOG_HOUR=""
 
 save() {
   (
@@ -43,6 +44,14 @@ while [ "$(date +%s)" -lt "$END" ]; do
   refresh_inputs
   node update.mjs || echo "update.mjs fehlgeschlagen, naechster Versuch im naechsten Durchlauf"
   node teams.mjs || echo "teams.mjs fehlgeschlagen (TOTW/Event-Team bleiben auf dem letzten Stand)"
+  # Katalog aller Karten ab 75: beim ersten Mal und dann alle 6 Stunden (dauert ca. 10 Minuten)
+  CH=$(date -u +%H)
+  if [ ! -f "$DATA_DIR/catalog.json" ] || { [ $((10#$CH % 6)) -eq 0 ] && [ "$CH" != "$LAST_CATALOG_HOUR" ]; }; then
+    node catalog.mjs || echo "catalog.mjs fehlgeschlagen"
+    LAST_CATALOG_HOUR="$CH"
+  fi
+  # Chemie-Daten (Verein, Liga, Nation, Positionen): in jedem Durchlauf ein Teil der Spieler, bis alle da sind
+  if [ -f "$DATA_DIR/catalog.json" ]; then node meta.mjs || echo "meta.mjs fehlgeschlagen"; fi
   H=$(date -u +%H)
   if [ "$H" != "$LAST_LEAK_HOUR" ]; then
     node leaks.mjs || echo "leaks.mjs fehlgeschlagen"
