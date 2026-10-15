@@ -127,6 +127,48 @@ catch (e) { console.error('Browser nicht verfuegbar:', e.message); process.exit(
 
 let pages = 0, total = 0, blocked = false, hardBlocks = 0;
 const touched = new Set();
+
+// ---------- Manuelle Preispunkte (manual.json) ----------
+// Format: [{ "name": "Rodri", "rating": 90, "points": [["2026-10-09 12:00", 28000], ...] }]  (Uhrzeiten = deutsche Zeit)
+const berlinOffsetMin = (t) => {
+  const v = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Berlin', timeZoneName: 'shortOffset' }).formatToParts(new Date(t)).find((p) => p.type === 'timeZoneName').value;
+  const m = v.match(/GMT([+-]\d+)(?::(\d+))?/);
+  return m ? +m[1] * 60 + (m[2] ? Math.sign(+m[1]) * +m[2] : 0) : 0;
+};
+const berlinToUtc = (str) => {
+  const m = String(str).match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+  if (!m) return NaN;
+  const [y, mo, d, h, mi] = m.slice(1).map(Number), base = Date.UTC(y, mo - 1, d, h, mi);
+  let t = base - berlinOffsetMin(base) * 60000;
+  t = base - berlinOffsetMin(t) * 60000;
+  return t;
+};
+const nrm = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+function applyManual() {
+  let list;
+  try { list = JSON.parse(fs.readFileSync('manual.json', 'utf8')); } catch { return; }
+  for (const m of Array.isArray(list) ? list : []) {
+    let found = null, foundSet = null;
+    for (const [k, db] of Object.entries(dbs)) {
+      for (const e of Object.values(db.cards)) {
+        if (nrm(e.name) !== nrm(m.name)) continue;
+        if (m.rating && e.rating !== +m.rating) continue;
+        if (m.version && nrm(e.version) !== nrm(m.version)) continue;
+        if (!found || (e.h.length && found.h.length && e.h[e.h.length - 1][1] < found.h[found.h.length - 1][1])) { found = e; foundSet = k; }
+      }
+    }
+    if (!found) { console.log(`Manuell: Karte "${m.name}" ${m.rating || ''} nicht gefunden (steht sie schon in den Preislisten?)`); continue; }
+    const have = new Set(found.h.map((x) => x[0]));
+    let add = 0;
+    for (const [ts, p] of m.points || []) {
+      const t = berlinToUtc(ts);
+      if (t > 0 && p > 0 && !have.has(t)) { found.h.push([t, Math.round(p)]); have.add(t); add++; }
+    }
+    found.h.sort((a, b) => a[0] - b[0]);
+    if (add) touched.add(foundSet);
+    console.log(`Manuell: ${found.name} ${found.rating}: ${add} neue Punkte`);
+  }
+}
 const stop = () => blocked || pages >= cfg.maxPagesTotal || (Date.now() - startedAt) / 60000 > cfg.maxMinutes;
 
 async function runJob(job) {
@@ -174,6 +216,7 @@ await Promise.all(
   })
 );
 await b.browser.close();
+applyManual();
 if (total === 0) { console.error('Keine Daten erhalten, Dateien bleiben unveraendert.'); process.exit(1); }
 
 for (const set of touched) {

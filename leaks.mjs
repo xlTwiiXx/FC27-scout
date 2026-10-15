@@ -19,6 +19,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const TAGS = [
   ['SBC', /\bsbcs?\b|squad building|streamlined/i],
+  ['TOTW', /totw|team of the week/i],
   ['Promo', /promo|totw|toty|tots|potm|futties|fantasy|flashback|showdown|rttf|ttf|future stars|wildcard|champions|rivals/i],
   ['Icon/Hero', /\bicons?\b|\bheroes?\b|\bheroe?s?\b/i],
   ['Pack', /\bpacks?\b|\bpick\b|\bswaps?\b/i],
@@ -46,7 +47,10 @@ export function toLeak(raw, fallbackHandle) {
   if (!(t > 0)) return null;
   const handle = (raw.user && raw.user.screen_name) || fallbackHandle;
   const tags = TAGS.filter(([, re]) => re.test(text)).map(([n]) => n);
-  return { id: raw.id_str, handle, name: (raw.user && raw.user.name) || handle, text: text.slice(0, 600), t,
+  const mediaRaw = (raw.extended_entities && raw.extended_entities.media) || (raw.entities && raw.entities.media) || raw.mediaDetails || [];
+  const media = [...mediaRaw.map((m) => m.media_url_https || m.media_url), ...((raw.photos || []).map((p) => p.url))].filter(Boolean).slice(0, 4);
+  const avatar = raw.user && raw.user.profile_image_url_https ? raw.user.profile_image_url_https.replace('_normal.', '_200x200.') : '';
+  return { id: raw.id_str, handle, name: (raw.user && raw.user.name) || handle, avatar, media, text: text.slice(0, 600), t,
     url: `https://x.com/${handle}/status/${raw.id_str}`, tags, pred: PRED.test(text) };
 }
 
@@ -60,6 +64,7 @@ const ctx = await browser.newContext({
 
 const accounts = {};
 const fresh = [];
+const prevAcc = prev.accounts || {};
 for (const handle of cfg.leakAccounts) {
   const info = { ok: false, n: 0, error: '' };
   accounts[handle] = info;
@@ -84,13 +89,16 @@ for (const handle of cfg.leakAccounts) {
       info.n = uniq.length;
       if (!uniq.length) info.error = 'Seite geladen, aber keine Beitraege gefunden';
       fresh.push(...uniq);
+      const newest = uniq.slice().sort((a, b) => b.t - a.t).find((x) => x.avatar);
+      if (newest) { info.avatar = newest.avatar; info.name = newest.name; }
     }
   } catch (e) {
     info.error = String(e.message).split('\n')[0];
   } finally {
     await page.close();
   }
-  console.log(`@${handle}: ${info.ok ? info.n + ' Beitraege' : 'FEHLER - ' + info.error}`);
+  if (!info.avatar && prevAcc[handle]) { info.avatar = prevAcc[handle].avatar || ''; info.name = info.name || prevAcc[handle].name || ''; }
+  console.log(`@${handle}: ${info.ok ? info.n + ' Beitraege' : 'FEHLER - ' + info.error}${info.ok ? ' | Profilbild: ' + (info.avatar ? 'ja' : 'nein') : ''}`);
   await sleep(cfg.leakDelayMs + Math.random() * 1500);
 }
 await browser.close();
@@ -115,4 +123,5 @@ if (!fresh.length && !tweets.length) {
   process.exit(1);
 }
 fs.writeFileSync(`${DIR}/leaks.json`, JSON.stringify({ updated: new Date(now).toISOString(), accounts, tweets }));
+console.log(`Beitraege mit Bild: ${fresh.filter((x) => x.media && x.media.length).length} von ${fresh.length}`);
 console.log(`Fertig: ${fresh.length} neue/aktuelle Beitraege gelesen, ${tweets.length} gespeichert.`);

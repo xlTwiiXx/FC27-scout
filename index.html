@@ -4,11 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0b0a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Trading Scout">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
 <title>FC 27 Trading Scout</title>
 <style>
 :root{color-scheme:dark;--bg:#0b0a14;--bg2:#120f22;--card:#16132b;--card2:#1e1a3a;--bd:#2d2858;--tx:#f1edff;--mu:#9d96c8;--ac:#8b5cf6;--ac2:#ec4899;--on:#fff;--gold:#fbbf24;--ok:#34d399;--wa:#fbbf24;--rd:#fb7185;--g1:rgba(139,92,246,.22);--g2:rgba(236,72,153,.14);
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
 html[data-theme=ocean]{--bg:#060f1b;--bg2:#0a1a2d;--card:#0d1c31;--card2:#12294a;--bd:#1d3a63;--tx:#e9f4ff;--mu:#8fb0d4;--ac:#22d3ee;--ac2:#3b82f6;--on:#031420;--g1:rgba(34,211,238,.18);--g2:rgba(59,130,246,.16)}
+html[data-theme=gold]{--bg:#100d04;--bg2:#191304;--card:#1d1707;--card2:#2a2109;--bd:#4d3d12;--tx:#fff8e1;--mu:#cbb67f;--ac:#facc15;--ac2:#f59e0b;--on:#1a1200;--g1:rgba(250,204,21,.18);--g2:rgba(245,158,11,.14)}
+html[data-theme=red]{--bg:#12070a;--bg2:#1d0b10;--card:#1f0d13;--card2:#2d1219;--bd:#5a1f2c;--tx:#ffeef0;--mu:#d49aa4;--ac:#ef4444;--ac2:#ec4899;--on:#fff;--g1:rgba(239,68,68,.2);--g2:rgba(236,72,153,.14)}
 html[data-theme=pitch]{--bg:#07110d;--bg2:#0c1d16;--card:#0f2119;--card2:#163325;--bd:#21503a;--tx:#ecfff5;--mu:#8fc4a9;--ac:#34d399;--ac2:#a3e635;--on:#04140b;--g1:rgba(52,211,153,.18);--g2:rgba(163,230,53,.12)}
 *{box-sizing:border-box}
 html{touch-action:manipulation;-webkit-text-size-adjust:100%}
@@ -20,7 +29,9 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 120px}
 .hd svg{width:46px;height:46px;flex:none;filter:drop-shadow(0 6px 18px color-mix(in srgb,var(--ac) 45%,transparent))}
 .hd h1{font-size:21px;letter-spacing:.04em;margin:0;line-height:1.1;font-weight:800}
 .hd h1 small{display:block;font-size:10.5px;letter-spacing:.34em;color:var(--ac);font-weight:700;margin-top:4px}
-.th{display:flex;gap:8px}.th button{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+.th{display:flex;gap:6px;flex:none}.th button{width:19px;height:19px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+.hd h1{white-space:nowrap}
+@media (max-width:420px){.hd{gap:9px}.hd svg{width:38px;height:38px}.hd h1{font-size:17.5px}.hd h1 small{font-size:9px;letter-spacing:.26em}}
 .th button.on{border-color:var(--tx)}
 .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border-radius:99px;background:rgba(255,255,255,.04);border:1px solid var(--bd);font-size:12px;color:var(--mu);margin:12px 0 16px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:pulse 2s infinite}
@@ -64,6 +75,8 @@ input:focus{outline:2px solid var(--ac);outline-offset:0}
 .hit span{display:block;font-size:11.5px;color:var(--mu);margin-top:4px}
 .tm{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mu)}.tm b{color:var(--tx)}
 .ft{font-size:11px;color:var(--mu);margin-top:6px}
+.pk{font-size:11.5px;color:var(--mu);margin:4px 0 0}
+.evd{font-size:12.5px;font-weight:700;margin:2px 0 8px;padding:7px 9px;border-radius:10px;background:rgba(0,0,0,.28);border:1px solid var(--bd);line-height:1.5}.evd span{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mu);font-weight:800}
 .prov{display:inline-block;margin:4px 0 0;font-size:11px;font-weight:700;color:var(--wa);border:1px dashed var(--wa);border-radius:8px;padding:2px 8px}
 .qk{display:inline-block;margin:4px 0 0;font-size:11px;font-weight:700;color:var(--rd);border:1px dashed var(--rd);border-radius:8px;padding:2px 8px}
 .lkchip{display:inline-block;margin-top:8px;font-size:11.5px;font-weight:800;color:var(--ac);border:1px solid var(--ac);border-radius:99px;padding:2px 10px;cursor:pointer}
@@ -85,6 +98,9 @@ input:focus{outline:2px solid var(--ac);outline-offset:0}
 .warn{font-size:12px;color:var(--wa);margin:0 0 8px}
 .lk{display:flex;gap:12px;padding:14px 0;border-top:1px solid var(--bd)}.lk:first-of-type{border-top:0}
 .av{width:38px;height:38px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--on);background:linear-gradient(135deg,var(--ac),var(--ac2))}
+.av{position:relative;overflow:hidden}.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:var(--card2)}
+.mg{display:grid;gap:6px;margin:6px 0}.mg img{width:100%;border-radius:12px;border:1px solid var(--bd);max-height:360px;object-fit:cover}.mg.n1 img{object-fit:contain;background:rgba(0,0,0,.25)}.mg.n2,.mg.n3,.mg.n4{grid-template-columns:1fr 1fr}
+.tg .lkb{color:var(--ok)}
 .lb{flex:1;min-width:0}.lh{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}.lh b{font-size:14px}
 .tx{margin:4px 0 6px;white-space:pre-wrap;word-wrap:break-word;font-size:14.5px}
 .tg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}.tg span{font-size:10.5px;font-weight:800;letter-spacing:.05em;padding:2px 8px;border-radius:99px;background:var(--card2);border:1px solid var(--bd);color:var(--ac)}.tg .pr2{color:var(--wa)}
@@ -119,7 +135,7 @@ input:focus{outline:2px solid var(--ac);outline-offset:0}
 <main>
 <div class="top">
   <div class="hd"><svg viewBox="0 0 64 64" aria-label="Logo"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--ac)"/><stop offset="1" style="stop-color:var(--ac2)"/></linearGradient></defs><path d="M32 4 56 13v19c0 14-10 24-24 29C18 56 8 46 8 32V13z" fill="url(#g1)"/><circle cx="32" cy="32" r="17" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.5"/><path d="M32 12v6M32 46v6M12 32h6M46 32h6" stroke="#fff" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/><polyline points="17,42 26,34 32,38 45,23" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 21h9v9z" fill="#fff"/></svg><h1>TRADING SCOUT<small>FC 27 · FLIP &amp; INVEST</small></h1></div>
-  <div class="th" id="th"><button data-t="violet" style="background:linear-gradient(135deg,#8b5cf6,#ec4899)" title="Violett"></button><button data-t="ocean" style="background:linear-gradient(135deg,#22d3ee,#3b82f6)" title="Ozean"></button><button data-t="pitch" style="background:linear-gradient(135deg,#34d399,#a3e635)" title="Rasen"></button></div>
+  <div class="th" id="th"><button data-t="violet" style="background:linear-gradient(135deg,#8b5cf6,#ec4899)" title="Violett"></button><button data-t="ocean" style="background:linear-gradient(135deg,#22d3ee,#3b82f6)" title="Ozean"></button><button data-t="pitch" style="background:linear-gradient(135deg,#34d399,#a3e635)" title="Rasen"></button><button data-t="gold" style="background:linear-gradient(135deg,#facc15,#f59e0b)" title="Gelb"></button><button data-t="red" style="background:linear-gradient(135deg,#ef4444,#ec4899)" title="Rot"></button></div>
 </div>
 <div class="chip"><i class="dot"></i><span id="stand">Lade Preise …</span></div>
 
@@ -139,8 +155,8 @@ input:focus{outline:2px solid var(--ac);outline-offset:0}
       <div><label>Min. Gewinn netto (%)</label><input id="roi" type="number" value="5"></div>
       <div class="span"><label>Haltedauer</label><div class="seg" id="seg"><button data-v="1">1 Tag</button><button data-v="3" class="on">3 Tage</button><button data-v="7">7 Tage</button></div><select id="hold"><option value="3" selected>3</option></select></div>
     </div>
-    <label class="sw"><input type="checkbox" id="st"> Nur belastbare Empfehlungen (benötigt mehr Historie)</label>
-    <p class="note" style="margin:0">Aus: Empfehlungen mit den bisherigen Daten. Bei kurzer Historie sind sie als „vorläufig“ oder „Schnellsignal“ markiert. An: nur Karten mit voller Historie für deine Haltedauer.</p>
+    <label class="sw"><input type="checkbox" id="st"> Nur belastbare Empfehlungen (mehr Anstiege und Historie)</label>
+    <p class="note" style="margin:0 0 6px">Aus: mindestens 2 nachweisbare Anstiege in der Preisgeschichte der Karte. An: mindestens 3 Anstiege und mehr Historie als deine Haltedauer.</p>
   </section>
   <section class="panel"><h2>Empfehlungen</h2><div id="rec" class="note">Lade …</div></section>
 </div>
@@ -159,8 +175,7 @@ input:focus{outline:2px solid var(--ac);outline-offset:0}
   <section class="panel">
     <h2>Leaks von X</h2>
     <p class="warn">Inoffizielle Meldungen von Leakern auf X. Sie können falsch sein oder von EA geändert werden.</p>
-    <div class="src" id="src"></div>
-    <div class="fl" id="lf"><button data-f="all" class="on">Alle</button><button data-f="SBC">SBC</button><button data-f="Promo">Promo</button><button data-f="Icon/Hero">Icon/Hero</button><button data-f="Pack">Packs</button><button data-f="Markt">Markt</button></div>
+    <div class="fl" id="lf"><button data-f="all" class="on">Alle</button><button data-f="SBC">SBC</button><button data-f="Promo">Promo</button><button data-f="TOTW">TOTW</button><button data-f="Pack">Packs</button><button data-f="Markt">Markt</button></div>
     <label class="sw" style="margin-top:0"><input type="checkbox" id="hp" checked> Prognosen und Spekulationen ausblenden</label>
     <div id="lk" class="note">Lade …</div>
   </section>
@@ -186,11 +201,13 @@ const DAYS=['Mo','Di','Mi','Do','Fr','Sa','So'];
 const bl=b=>`${DAYS[Math.floor(b/6)]} ${(b%6)*4}–${(b%6)*4+4} Uhr`;
 function nextIn(d,a,b){const t=new Date(d);for(let i=0;i<216;i++){const m=(t.getDay()+6)%7*1440+t.getHours()*60+t.getMinutes();if(m>=a&&m<b)return t;t.setHours(t.getHours()+1,0,0,0)}return new Date(d)}
 function nextAtBucket(d,b){const wd=Math.floor(b/6),h=(b%6)*4,t=new Date(d);for(let i=0;i<24*8;i++){if((t.getDay()+6)%7===wd&&t.getHours()>=h&&t.getHours()<h+4)return t;t.setHours(t.getHours()+1,0,0,0)}return new Date(d)}
+const fdt=d=>d.toLocaleString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 const fd=d=>d-Date.now()<6e4?'jetzt':d.toLocaleString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 const hl=d=>d>=1?`${d} Tg.`:`${Math.round(d*24)} Std.`;
 const pct=x=>x==null?'–':(x>=0?'+':'')+(x*100).toFixed(1)+' %';
 let D=null,LK=null,WIN=null,FIL='all',CR=null;
 const RAW='https://raw.githubusercontent.com/xlTwiiXx/FC27-scout/data/';
+let MAIN=null;
 
 /* ---------- Kartendesigns (Special Cards) ---------- */
 const GOLD={bg:'linear-gradient(160deg,#fdf0a6,#e7bd3c 55%,#b88a14)',fg:'#2a1f00',ac:'#e7bd3c',sh:'inset 0 0 0 1px rgba(255,255,255,.45),0 8px 18px rgba(231,189,60,.28)'};
@@ -215,40 +232,51 @@ function cardStyle(v){
   return mkS(`linear-gradient(160deg,hsl(${hh} 90% 74%),hsl(${hh} 78% 52%) 55%,hsl(${hh} 70% 30%))`,'#ffffff',`hsl(${hh} 90% 70%)`);
 }
 
-/* ---------- Analyse ---------- */
-// Stufe 1/2: Rueckblick auf die eigene Preisgeschichte der Karte
-function analyzeAt(c,H,short){
-  const h=c.h;
-  if(h.length<(short?8:10))return {why:'zu wenige Messpunkte'};
-  const tN=h[h.length-1][0],span=(tN-h[0][0])/864e5;
-  if(span<(short?H+.75:Math.max(2,H+1)))return {why:`Historie zu kurz (${span.toFixed(1)} Tage)`,span};
-  const ps=h.map(x=>x[1]),L=q(ps,.3),cur=h[h.length-1][1],ent=[],gap=Math.min(6*36e5,H*864e5*.5);let lastE=-1e15;
-  for(const [t,p] of h){if(p<=L&&t-lastE>=gap&&t+H*864e5<=tN){ent.push([t,p]);lastE=t}}
-  const ratios=[];
-  for(const [t,p] of ent){
-    const win=h.filter(x=>x[0]>=t+H*.5*864e5&&x[0]<=t+H*864e5).map(x=>x[1]);
-    if(win.length>=2)ratios.push(q(win,.5)/p);
+/* ---------- Analyse: nachweisbare Anstiege (Peaks) in der Preisgeschichte ---------- */
+const dl=ms=>{const x=ms/36e5;return x<48?Math.max(1,Math.round(x))+' Std.':(x/24).toFixed(1).replace('.',',')+' Tg.'};
+// Zickzack-Linie: bestaetigte Tiefs und Hochs, jede Gegenbewegung mindestens th (z. B. 10,5 %)
+function zigzag(h,th){
+  const out=[];let hi=h[0],lo=h[0],mode=0;
+  for(let i=1;i<h.length;i++){
+    const x=h[i],p=x[1];
+    if(mode===0){
+      if(p>hi[1])hi=x;
+      if(p<lo[1])lo=x;
+      if(hi[0]>lo[0]&&hi[1]>=lo[1]*(1+th)){out.push({t:lo[0],p:lo[1],k:'low'});mode=1}
+      else if(lo[0]>hi[0]&&lo[1]<=hi[1]*(1-th)){out.push({t:hi[0],p:hi[1],k:'high'});mode=-1}
+    }else if(mode===1){
+      if(p>hi[1])hi=x;
+      else if(p<=hi[1]*(1-th)){out.push({t:hi[0],p:hi[1],k:'high'});mode=-1;lo=x}
+    }else{
+      if(p<lo[1])lo=x;
+      else if(p>=lo[1]*(1+th)){out.push({t:lo[0],p:lo[1],k:'low'});mode=1;hi=x}
+    }
   }
-  if(ratios.length<(short?5:4))return {why:`zu wenige Vergleichsfälle (${ratios.length})`,span};
-  const r25=q(ratios,.25),med=q(ratios,.5),ref=Math.min(cur,L);
-  return {tier:short?1:0,cur,L,ref,span,H,short,n:h.length,cases:ratios.length,hit:ratios.filter(r=>r*.95>1).length/ratios.length,
-    sellCons:Math.round(ref*r25),sellMed:Math.round(ref*med),roi:r25*.95-1,roiMed:med*.95-1};
+  if(mode===1)out.push({t:hi[0],p:hi[1],k:'high',open:true});
+  else if(mode===-1)out.push({t:lo[0],p:lo[1],k:'low',open:true});
+  return out;
 }
-// Stufe 3 (Schnellsignal): nur die bisherige Preisspanne. Guenstig = im unteren Viertel, Ziel = oberes Viertel
-function analyzeQuick(c){
+// Eine Karte wird nur empfohlen, wenn ihr Verlauf mindestens 2 (streng: 3) Anstiege von einem Tief auf ein bestaetigtes Hoch
+// innerhalb der Haltedauer zeigt, jeweils so gross, dass nach 5 % Steuer dein Mindestgewinn bleibt.
+function analyzeSwing(c,H,minR,strict){
   const h=c.h;
-  if(h.length<8)return {why:'zu wenige Messpunkte'};
+  if(h.length<6)return {why:'zu wenige Messpunkte',span:0};
   const span=(h[h.length-1][0]-h[0][0])/864e5;
-  if(span<.2)return {why:`Historie zu kurz (${(span*24).toFixed(0)} Std.)`,span};
-  const ps=h.map(x=>x[1]),cur=h[h.length-1][1],L=q(ps,.25),T=q(ps,.75),ref=Math.min(cur,L);
-  return {tier:2,quick:true,short:true,cur,L,ref,span,n:h.length,lo:Math.min(...ps),hi:Math.max(...ps),sellCons:Math.round(T),sellMed:Math.round(q(ps,.5)),roi:T*.95/ref-1,roiMed:q(ps,.5)*.95/ref-1};
-}
-function analyze(c,H,allowShort){
-  const a=analyzeAt(c,H,false);
-  if(!a.why||!allowShort)return a;
-  for(const hd of [1,.5,.25]){if(hd>=H)continue;const b=analyzeAt(c,hd,true);if(!b.why)return b}
-  const z=analyzeQuick(c);
-  return z.why?a:z;
+  if(strict&&span<Math.max(2,H+1))return {why:'Historie zu kurz',span};
+  const th=Math.max(.08,(1+minR)/.95-1),pv=zigzag(h,th),ups=[];
+  for(let i=0;i+1<pv.length;i++){
+    const a=pv[i],b=pv[i+1];
+    if(a.k==='low'&&b.k==='high'&&!b.open&&b.t-a.t<=H*864e5)ups.push({lo:a,hi:b,r:b.p/a.p,d:b.t-a.t});
+  }
+  const need=strict?3:2;
+  if(ups.length<need)return {why:`nur ${ups.length} Anstieg(e)`,span,ups:ups.length};
+  const rec=ups.slice(-3),cur=h[h.length-1][1];
+  const Lz=Math.round(q(rec.map(u=>u.lo.p),.5)),ratio=Math.min(...rec.map(u=>u.r)),dur=q(rec.map(u=>u.d),.5);
+  const lastLow=[...pv].reverse().find(x=>x.k==='low'),broke=lastLow&&cur<lastLow.p*.92;
+  const inZone=cur<=Lz,near=cur<=Lz*1.06,ref=Math.min(cur,Lz);
+  const tail=pv.slice(-6),ev=tail.map((x,i)=>fmt(x.p)+(i<tail.length-1?(tail[i+1].p>x.p?' ↗ ':' ↘ '):'')).join('')+' → jetzt '+fmt(cur);
+  return {show:near&&!broke,inZone,cur,Lz,ref,span,ups:ups.length,rises:rec.map(u=>u.r-1),peaks:rec.map(u=>u.hi.t),dmin:Math.min(...rec.map(u=>u.d)),dmax:Math.max(...rec.map(u=>u.d)),sellCons:Math.round(ref*ratio),
+    roi:ratio*.95-1,dur,ev,sc:(ratio*.95-1)*Math.min(1,ups.length/3),n:h.length};
 }
 function learnWindows(cards){
   const sum=new Array(42).fill(0),cnt=new Array(42).fill(0);
@@ -285,40 +313,32 @@ function render(){
     $('sw').textContent=`${bl(WIN.sell)} · Ø +${((WIN.hi-1)*100).toFixed(1)} %`;
     $('wn').textContent='Aus den gesammelten Preisen aller Karten berechnet (Abweichung vom Median der Karte).';
   }else{
-    $('bw').textContent='Fr 18:00 – So 20:00';$('sw').textContent='Mo 18:00 – Mi 22:00';
-    $('wn').textContent='Faustregel – wird durch echte Daten ersetzt, sobald genug Historie da ist.';
+    $('bw').textContent='noch zu wenig Daten';$('sw').textContent='noch zu wenig Daten';
+    $('wn').textContent='Die beste Zeit wird berechnet, sobald genug Preise gesammelt sind. Bis dahin zeigt die App keine Wochentage an.';
   }
   const coins=num($('coins').value),share=(parseFloat($('share').value)||40)/100,minR=(parseFloat($('roi').value)||0)/100,H=parseInt($('hold').value)||3,strict=$('st').checked;
-  let rem=coins,tot=0,prof=0,h='',skipped=0,maxSpan=0;
+  let rem=coins,tot=0,prof=0,html='',none=0,maxSpan=0;
   const res=[];
   for(const c of cards){
-    const a=analyze(c,H,!strict);
+    const a=analyzeSwing(c,H,minR,strict);
     if(a.span>maxSpan)maxSpan=a.span;
-    if(a.why){skipped++;continue}
-    if(a.quick){ if(a.roi>=Math.max(minR,.06)&&a.cur<=a.L*1.03)res.push({c,a,sc:a.roi}); }
-    else if(a.roi>=minR&&a.hit>=.65&&a.cur<=a.L*1.08)res.push({c,a,sc:a.roi*a.hit*Math.min(1,a.cases/8)});
+    if(a.why){none++;continue}
+    if(a.show)res.push({c,a});
   }
-  res.sort((x,y)=>(x.a.tier-y.a.tier)||(y.sc-x.sc));
+  res.sort((x,y)=>y.a.sc-x.a.sc);
   for(const {c,a} of res){
     const qy=Math.max(0,Math.min(Math.floor(coins*share/a.ref),Math.floor(rem/a.ref),25));
     if(!qy)continue;rem-=qy*a.ref;tot+=qy*a.ref;prof+=qy*(a.sellCons*.95-a.ref);
-    const lkm=leakFor(c.name),now=new Date(),now_ok=a.cur<=a.L,buyAt=now_ok?now:(WIN?nextAtBucket(now,WIN.buy):nextIn(now,4*1440+1080,6*1440+1200));
-    let sellTxt;
-    if(a.quick)sellTxt='sobald Preis ≥ Ziel';
-    else if(a.short)sellTxt=fd(new Date(buyAt.getTime()+a.H*864e5));
-    else{const sf=new Date(buyAt.getTime()+H*864e5);sellTxt=fd(WIN?nextAtBucket(sf,WIN.sell):nextIn(sf,1080,2*1440+1320))}
-    const flag=a.quick?`<div class="qk">Schnellsignal · nur ${a.span<1?Math.round(a.span*24)+' Std.':a.span.toFixed(1)+' Tage'} Daten, unsicher</div>`:a.short?`<div class="prov">Vorläufig · Haltedauer ${hl(a.H)} · Historie erst ${a.span.toFixed(1)} Tage</div>`:'';
-    const mid=a.quick?`<div class="hit"><span>Preisspanne bisher ${fmt(a.lo)} – ${fmt(a.hi)} · Ziel = oberes Viertel der Spanne</span></div>`
-      :`<div class="hit"><div class="bar"><i style="width:${Math.round(a.hit*100)}%"></i></div><span>${Math.round(a.hit*100)} % Trefferquote · ${a.cases} Vergleichsfälle</span></div>`;
-    const cs=cardStyle(c.version);
-    h+=`<article class="pc"><div class="badge" style="background:${cs.bg};color:${cs.fg};box-shadow:${cs.sh}"><b>${c.rating}</b><span>${esc(c.pos)}</span></div><div class="pcb"><div class="pct"><div class="nm">${esc(c.name)}<span class="tag" style="color:${cs.ac};border-color:${cs.ac}">${esc(c.version)}</span></div><span class="sig ${now_ok?'ok':'wa'}">${now_ok?'Jetzt kaufen':'Beobachten'}</span></div>${flag}<div class="pr">${fmt(a.cur)}<small> Coins aktuell</small></div><div class="trio"><div><span>Einkauf bis</span><b>${fmt(a.L)}</b></div><div><span>Ziel${a.quick?'':' (konservativ)'}</span><b>${fmt(a.sellCons)}</b></div><div><span>Gewinn/Stk.</span><b class="ok">+${fmt(a.sellCons*.95-a.ref)}</b></div></div>${mid}<div class="tm"><span>Kaufen <b>${fd(buyAt)}</b></span><span>Verkaufen <b>${sellTxt}</b></span></div><div class="ft">${qy} Stk. · ${(a.roi*100).toFixed(1)} % netto · typisch ${fmt(a.sellMed)} · ${a.n} Punkte / ${a.span<1?Math.round(a.span*24)+' Std.':a.span.toFixed(1)+' Tg.'}</div>${lkm?`<span class="lkchip" data-go="leaks">📡 In Leaks erwähnt · ${ago(lkm.t)}</span>`:''}</div></article>`;
+    const lkm=leakFor(c.name),cs=cardStyle(c.version),now=new Date();
+    const buyTxt=a.inZone?'jetzt':`sobald Preis ≤ ${fmt(a.Lz)}`;
+    const t0=now.getTime(),rng=a.dmin===a.dmax?`ca. ${fdt(new Date(t0+a.dmin))}`:`ca. ${fdt(new Date(t0+a.dmin))} – ${fdt(new Date(t0+a.dmax))}`;
+    const sellTxt=a.inZone?`${rng} oder bei ≥ ${fmt(a.sellCons)}`:`nach dem Kauf ca. ${dl(a.dmin)}${a.dmax!==a.dmin?' bis '+dl(a.dmax):''} später oder bei ≥ ${fmt(a.sellCons)}`;
+    html+=`<article class="pc"><div class="badge" style="background:${cs.bg};color:${cs.fg};box-shadow:${cs.sh}"><b>${c.rating}</b><span>${esc(c.pos)}</span></div><div class="pcb"><div class="pct"><div class="nm">${esc(c.name)}<span class="tag" style="color:${cs.ac};border-color:${cs.ac}">${esc(c.version)}</span></div><span class="sig ${a.inZone?'ok':'wa'}">${a.inZone?'Jetzt kaufen':'Beobachten'}</span></div><div class="pr">${fmt(a.cur)}<small> Coins aktuell</small></div><div class="evd"><span>Verlauf</span>${esc(a.ev)}</div><div class="trio"><div><span>Einkauf bis</span><b>${fmt(a.Lz)}</b></div><div><span>Ziel (kleinster Anstieg)</span><b>${fmt(a.sellCons)}</b></div><div><span>Gewinn/Stk.</span><b class="ok">+${fmt(a.sellCons*.95-a.ref)}</b></div></div><div class="hit"><span>${a.ups} Anstiege nachweisbar: ${a.rises.map(x=>'+'+Math.round(x*100)+' %').join(', ')} · typisch nach ${dl(a.dur)}</span></div><div class="tm"><span>Kaufen <b>${buyTxt}</b></span><span>Verkaufen <b>${sellTxt}</b></span></div><div class="pk">Bisherige Hochs: ${a.peaks.map(x=>fdt(new Date(x))).join(' · ')}</div><div class="ft">${qy} Stk. · ${(a.roi*100).toFixed(1)} % netto · ${a.n} Punkte / ${a.span<1?Math.round(a.span*24)+' Std.':a.span.toFixed(1)+' Tg.'}</div>${lkm?`<span class="lkchip" data-go="leaks">📡 In Leaks erwähnt · ${ago(lkm.t)}</span>`:''}</div></article>`;
   }
-  const need=Math.max(2,H+1);
-  let info=`<p class="note" style="margin:12px 0 0">${fmt(skipped)} Karten haben noch zu wenig Historie (für ${H} Tg. Haltedauer nötig: mindestens ${need} Tage, längste aktuell ${maxSpan.toFixed(1)} Tage).</p>`;
-  if(res.some(x=>x.a.short&&!x.a.quick))info+='<p class="note" style="margin:6px 0 0"><b>Vorläufig</b> = kürzere Haltedauer, weil die Historie noch kurz ist.</p>';
-  if(res.some(x=>x.a.quick))info+='<p class="note" style="margin:6px 0 0"><b>Schnellsignal</b> = nur aus der bisherigen Preisspanne berechnet, ohne Rückblick auf frühere Fälle. Das ist die unsicherste Stufe.</p>';
-  const empty=maxSpan<need&&strict?`<span class="note">Für ${H} Tg. Haltedauer braucht die App mindestens ${need} Tage Historie, aktuell sind es ${maxSpan.toFixed(1)}. Schalte „Nur belastbare Empfehlungen“ aus, um Empfehlungen mit den aktuellen Daten zu sehen, oder wähle eine kürzere Haltedauer.</span>`:'<span class="note">Aktuell keine Karte, die Haltedauer, Mindestgewinn und die Qualitätsregeln erfüllt.</span>';
-  $('rec').innerHTML=(h?`<div class="stats"><div><span>Investiert</span><b>${fmt(tot)}</b></div><div><span>Übrig</span><b>${fmt(rem)}</b></div><div><span>Erw. Gewinn</span><b class="ok">+${fmt(prof)}</b></div></div><div class="recs">${h}</div><p class="note" style="margin:10px 0 0">Das konservative Ziel ist der Preis, den die Karte in 75 % der Vergleichsfälle nach der Haltedauer mindestens erreichte.</p>`:empty)+info;
+  const need=strict?3:2;
+  const info=`<p class="note" style="margin:12px 0 0">${fmt(none)} von ${fmt(cards.length)} Karten haben noch keine ${need} nachweisbaren Anstiege innerhalb von ${H} Tg. (längste Historie: ${maxSpan.toFixed(1)} Tage).</p><p class="note" style="margin:6px 0 0">Ein Anstieg zählt nur, wenn der Preis von einem Tief auf ein bestätigtes Hoch stieg und nach 5 % Steuer dein Mindestgewinn blieb. Das Ziel ist der kleinste der letzten Anstiege.</p>`;
+  const empty=`<span class="note">Aktuell keine Karte mit ${need} nachweisbaren Anstiegen, die jetzt im Einkaufsbereich liegt. ${maxSpan<Math.max(2,H+1)?'Die Historie ist noch kurz (längste '+maxSpan.toFixed(1)+' Tage), mit jedem Lauf kommen mehr Karten dazu.':''}</span>`;
+  $('rec').innerHTML=(html?`<div class="stats"><div><span>Investiert</span><b>${fmt(tot)}</b></div><div><span>Übrig</span><b>${fmt(rem)}</b></div><div><span>Erw. Gewinn</span><b class="ok">+${fmt(prof)}</b></div></div><div class="recs">${html}</div>`:empty)+info;
 }
 function cheapData(){
   const by={};
@@ -344,17 +364,23 @@ function renderCheap(){
   $('chh').textContent=`Cheapest ${CR} · ${l.length} Karten am Markt`;
   $('chl').innerHTML=l.slice(0,15).map((x,i)=>(()=>{const cs=cardStyle(x.c.version);return `<a class="cr" href="${esc(x.c.url||'#')}" target="_blank" rel="noopener"><span class="mb" style="background:${cs.bg};color:${cs.fg};box-shadow:${cs.sh}"><b>${x.c.rating}</b><i>${esc(x.c.pos)}</i></span><div class="cn"><b>${esc(x.c.name)}</b><span style="color:${cs.ac}">${esc(x.c.version)}</span></div><div class="cp"><b>${fmt(x.p)}</b><span class="${x.ch==null?'note':x.ch>=0?'ok':'rd'}">${pct(x.ch)}</span></div></a>`})()).join('');
 }
+const tagsOf=t=>{const a=(t.tags||[]).slice();if(/totw|team of the week/i.test(t.text)&&!a.includes('TOTW'))a.push('TOTW');return a};
 function renderLeaks(){
   const box=$('lk');
-  if(!LK){box.textContent='Noch keine Leaks geladen. Der Abruf läuft stündlich.';$('src').innerHTML='';$('lkc').textContent='';return}
+  if(!LK){box.textContent='Noch keine Leaks geladen. Der Abruf läuft stündlich.';$('lkc').textContent='';return}
   const cut=Date.now()-14*864e5;
   LK.tweets=(LK.tweets||[]).filter(t=>t.t>=cut&&t.kind!=='news');
-  $('src').innerHTML=Object.entries(LK.accounts||{}).map(([h,i])=>`<span class="${i.ok?'good':'bad'}">@${esc(h)} ${i.ok?'✓ '+i.n:'nicht erreichbar'}</span>`).join('');
-  const hide=$('hp').checked;
-  const list=LK.tweets.filter(t=>(FIL==='all'||t.tags.includes(FIL))&&!(hide&&t.pred));
+  const accs=LK.accounts||{},hide=$('hp').checked,isT=FIL==='TOTW';
+  const list=LK.tweets.filter(t=>(FIL==='all'||tagsOf(t).includes(FIL))&&(isT||!(hide&&t.pred)));
   const fresh=LK.tweets.filter(t=>t.t>Date.now()-864e5&&!(hide&&t.pred)).length;
   $('lkc').textContent=fresh?String(fresh):'';
-  box.innerHTML=`<p class="note" style="margin:0 0 4px">Stand ${ago(Date.parse(LK.updated))} · ${list.length} Beiträge</p>`+(list.slice(0,40).map(t=>`<article class="lk"><div class="av">${esc((t.handle||'?')[0].toUpperCase())}</div><div class="lb"><div class="lh"><b>${esc(t.name&&t.name!==t.handle?t.name:'@'+t.handle)}</b><span class="note">@${esc(t.handle)} · ${ago(t.t)}</span></div><div class="tx">${esc(t.text)}</div><div class="tg">${t.tags.map(x=>`<span>${esc(x)}</span>`).join('')}${t.pred?'<span class="pr2">PROGNOSE</span>':''}</div><a href="${esc(t.url)}" target="_blank" rel="noopener">Auf X öffnen ↗</a></div></article>`).join('')||'<span class="note">Keine passenden Beiträge.</span>');
+  const head=`<p class="note" style="margin:0 0 6px">Stand ${ago(Date.parse(LK.updated))} · ${list.length} Beiträge${isT?' · TOTW-Ansicht: gepostete Teams als Leak oder Prognose, jeweils markiert':''}</p>`;
+  const bad=Object.values(accs).length&&Object.values(accs).every(i=>!i.ok);
+  box.innerHTML=head+(list.slice(0,40).map(t=>{
+    const av=(accs[t.handle]&&accs[t.handle].avatar)||t.avatar||'',ini=esc((t.handle||'?')[0].toUpperCase());
+    const mg=(t.media&&t.media.length)?`<div class="mg n${Math.min(t.media.length,4)}">${t.media.map(u=>`<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`).join('')}</div>`:'';
+    const tg=tagsOf(t).filter(x=>x!=='Icon/Hero').map(x=>`<span>${esc(x)}</span>`).join('')+(isT||t.pred?`<span class="${t.pred?'pr2':'lkb'}">${t.pred?'PROGNOSE':'LEAK'}</span>`:'');
+    return `<article class="lk"><div class="av">${ini}${av?`<img src="${esc(av)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</div><div class="lb"><div class="lh"><b>${esc(t.name&&t.name!==t.handle?t.name:'@'+t.handle)}</b><span class="note">@${esc(t.handle)} · ${ago(t.t)}</span></div><div class="tx">${esc(t.text)}</div>${mg}<div class="tg">${tg}</div><a href="${esc(t.url)}" target="_blank" rel="noopener">Auf X öffnen ↗</a></div></article>`}).join('')||`<span class="note">${bad?'Die X-Konten waren beim letzten Abruf nicht erreichbar.':'Keine passenden Beiträge.'}</span>`);
 }
 function renderMarket(){
   if(!D)return;
@@ -380,13 +406,17 @@ async function getJ(f){
   }
   return null;
 }
+function rebuild(){
+  if(!MAIN)return;
+  D={updated:MAIN.updated,cards:MAIN.cards};WIN=null;
+}
 async function load(){
   const [a,b,l]=await Promise.all([getJ('prices.json'),getJ('prices-low.json'),getJ('leaks.json')]);
   const ok=[a,b].filter(Boolean);
   LK=l;
   if(!ok.length){$('stand').textContent='Preise konnten nicht geladen werden.';renderLeaks();return}
-  D={updated:ok.map(x=>x.updated).filter(Boolean).sort().pop()||null,cards:Object.assign({},...ok.map(x=>x.cards||{}))};
-  WIN=null;render();renderCheap();renderLeaks();renderMarket();
+  MAIN={updated:ok.map(x=>x.updated).filter(Boolean).sort().pop()||null,cards:Object.assign({},...ok.map(x=>x.cards||{}))};
+  rebuild();render();renderCheap();renderLeaks();renderMarket();
 }
 function showTab(n){
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+n));
@@ -419,7 +449,7 @@ document.querySelectorAll('#th button').forEach(b=>b.onclick=()=>setTheme(b.data
 $('hp').onchange=renderLeaks;
 $('ov').onclick=e=>{const b=e.target.closest&&e.target.closest('[data-r]');if(b){CR=+b.dataset.r;renderCheap()}};
 $('rec').onclick=e=>{const g=e.target.closest&&e.target.closest('[data-go]');if(g)showTab(g.dataset.go)};
-{let t='violet';try{t=localStorage.getItem('fc27theme')||'violet'}catch(e){}if(!['violet','ocean','pitch'].includes(t))t='violet';setTheme(t)}
+{let t='violet';try{t=localStorage.getItem('fc27theme')||'violet'}catch(e){}if(!['violet','ocean','pitch','gold','red'].includes(t))t='violet';setTheme(t)}
 {const h=(location.hash||'').slice(1);if(['inv','cheap','leaks','mkt'].includes(h))showTab(h)}
 ['gesturestart','gesturechange','gestureend'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault()));
 document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault()},{passive:false});
