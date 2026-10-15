@@ -10,9 +10,11 @@ const cfg = {
   leakDelayMs: 4000,
   ...JSON.parse(fs.readFileSync('config.json', 'utf8')),
 };
+const DIR = process.env.DATA_DIR || '.';
+fs.mkdirSync(DIR, { recursive: true });
 const now = Date.now();
 let prev = { tweets: [] };
-try { prev = JSON.parse(fs.readFileSync('leaks.json', 'utf8')); } catch {}
+try { prev = JSON.parse(fs.readFileSync(`${DIR}/leaks.json`, 'utf8')); } catch {}
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const TAGS = [
@@ -112,5 +114,5 @@ if (!fresh.length && !tweets.length) {
   console.error('Keine Leaks erhalten (X blockiert vermutlich den Zugriff). leaks.json bleibt unveraendert.');
   process.exit(1);
 }
-fs.writeFileSync('leaks.json', JSON.stringify({ updated: new Date(now).toISOString(), accounts, tweets }));
+fs.writeFileSync(`${DIR}/leaks.json`, JSON.stringify({ updated: new Date(now).toISOString(), accounts, tweets }));
 console.log(`Fertig: ${fresh.length} neue/aktuelle Beitraege gelesen, ${tweets.length} gespeichert.`);

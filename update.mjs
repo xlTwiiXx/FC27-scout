@@ -17,12 +17,15 @@ const cfg = {
   ...JSON.parse(fs.readFileSync('config.json', 'utf8')),
 };
 const FORCE_ALL = process.env.FORCE_ALL === '1';
+const DIR = process.env.DATA_DIR || '.';
+fs.mkdirSync(DIR, { recursive: true });
 const startedAt = Date.now();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const SETS = {
-  fast: { file: 'prices.json', fullDays: 3, thinHours: 4, maxDays: 40 },
-  slow: { file: 'prices-low.json', fullDays: 2, thinHours: 4, maxDays: 14 },
+  // letzte Tage voll (15-Minuten-Raster), danach stuendlich, danach alle 4 Stunden
+  fast: { file: `${DIR}/prices.json`, fullDays: 1, midDays: 3, thinHours: 4, maxDays: 21 },
+  slow: { file: `${DIR}/prices-low.json`, fullDays: 1, midDays: 3, thinHours: 4, maxDays: 14 },
 };
 const dbs = {};
 for (const [k, s] of Object.entries(SETS)) {
@@ -181,8 +184,9 @@ for (const set of touched) {
     let last = 0;
     e.h = e.h.filter((x) => {
       if (x[0] < cutoff) return false;
-      if (x[0] >= t - s.fullDays * 864e5) { last = x[0]; return true; }
-      if (x[0] - last >= s.thinHours * 36e5) { last = x[0]; return true; }
+      const age = t - x[0];
+      const gap = age <= s.fullDays * 864e5 ? 0 : age <= s.midDays * 864e5 ? 36e5 : s.thinHours * 36e5;
+      if (x[0] - last >= gap) { last = x[0]; return true; }
       return false;
     });
     if (!e.h.length) delete db.cards[id];
