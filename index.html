@@ -23,6 +23,8 @@ input,select{width:100%;background:var(--in);color:var(--tx);border:1px solid va
 .it{border-top:1px solid var(--bd);padding:12px 0}.it:first-child{border-top:0;padding-top:0}
 .top{display:flex;justify-content:space-between;gap:8px;align-items:center}.top b{font-size:16px}
 .kv{display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;font-size:13px;margin-top:6px}.kv span{color:var(--mu)}
+.ev{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--bd);font-size:13px}.ev:first-child{border-top:0}
+.ev a{color:var(--br);text-decoration:none}
 .hd{display:flex;align-items:center;gap:10px}.hd svg{width:40px;height:40px;flex:none}
 #splash{position:fixed;inset:0;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(circle at 50% 40%,#9b1021,#2a0509 70%);color:#fff;transition:opacity .6s,visibility .6s}
 #splash.out{opacity:0;visibility:hidden}
@@ -53,65 +55,112 @@ input,select{width:100%;background:var(--in);color:var(--tx);border:1px solid va
   </div>
 </div>
 
-<div class="card">
-  <h2>Zeitfenster (Faustregel)</h2>
-  <div class="win">
-    <div><b>Einkaufen</b>Fr 18:00 – So 20:00<div id="bs" class="note"></div></div>
-    <div><b>Verkaufen</b>Mo 18:00 – Mi 22:00<div id="ss" class="note"></div></div>
-  </div>
-</div>
+<div class="card"><h2>Beste Kauf- und Verkaufszeit</h2><div class="win"><div><b>Einkaufen</b><span id="bw"></span></div><div><b>Verkaufen</b><span id="sw"></span></div></div><p class="note" id="wn" style="margin:8px 0 0"></p></div>
 
 <div class="card"><h2>Empfehlungen</h2><div id="rec" class="note">Lade …</div></div>
-<p class="note">Keine Finanzberatung. Die Preise sind Sofortkauf-Preise von FUT.GG und können sich schnell ändern – prüfe sie im Spiel vor dem Kauf. Bei vielen Karten auf einmal bewegst du den Markt selbst. Die Empfehlungen werden mit jedem neuen Messpunkt verlässlicher.</p>
+
+<div class="card"><h2>Markt-Ereignisse (offiziell)</h2><div id="ev" class="note">Lade …</div></div>
+
+<p class="note">Keine Finanzberatung. Alle Zahlen beruhen auf dem günstigsten Sofortkauf-Preis von FUT.GG, nicht auf tatsächlich erzielten Verkäufen. Prüfe den Preis im Spiel vor dem Kauf. Bei vielen Karten auf einmal bewegst du den Markt selbst.</p>
 </main>
 <script>
 const $=id=>document.getElementById(id);
 const fmt=n=>Math.round(n).toLocaleString('de-DE');
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ago=t=>{const m=Math.round((Date.now()-t)/60000);return m<1?'gerade eben':m<60?`vor ${m} Min.`:m<1440?`vor ${Math.round(m/60)} Std.`:`vor ${Math.round(m/1440)} Tg.`};
+const left=t=>{const m=Math.round((t-Date.now())/60000);return m<=0?'abgelaufen':m<60?`${m} Min.`:m<2880?`${Math.round(m/60)} Std.`:`${Math.round(m/1440)} Tg.`};
 const q=(a,p)=>{const s=[...a].sort((x,y)=>x-y);return s[Math.min(s.length-1,Math.max(0,Math.round((s.length-1)*p)))]};
+const DAYS=['Mo','Di','Mi','Do','Fr','Sa','So'];
+const bl=b=>`${DAYS[Math.floor(b/6)]} ${(b%6)*4}–${(b%6)*4+4} Uhr`;
 function nextIn(d,a,b){const t=new Date(d);for(let i=0;i<216;i++){const m=(t.getDay()+6)%7*1440+t.getHours()*60+t.getMinutes();if(m>=a&&m<b)return t;t.setHours(t.getHours()+1,0,0,0)}return new Date(d)}
+function nextAtBucket(d,b){const wd=Math.floor(b/6),h=(b%6)*4,t=new Date(d);for(let i=0;i<24*8;i++){if((t.getDay()+6)%7===wd&&t.getHours()>=h&&t.getHours()<h+4)return t;t.setHours(t.getHours()+1,0,0,0)}return new Date(d)}
 const fd=d=>d-Date.now()<6e4?'jetzt':d.toLocaleString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-let D=null;
-function stat(c){
-  const h=c.h,w=h.filter(x=>x[0]>Date.now()-7*864e5),use=w.length>=2?w:h,ps=use.map(x=>x[1]),big=ps.length>=10,last=h[h.length-1];
-  return {cur:last[1],last:last[0],lo:big?q(ps,.1):Math.min(...ps),hi:big?q(ps,.9):Math.max(...ps),n:h.length,span:(last[0]-h[0][0])/864e5};
+let D=null,EV=null,WIN=null;
+
+// Realistische Schaetzung per Rueckblick: Wie oft und wie stark stieg der Preis,
+// wenn die Karte frueher so guenstig war wie jetzt, innerhalb der Haltedauer?
+function analyze(c,H){
+  const h=c.h;
+  if(h.length<10)return {why:'zu wenige Messpunkte'};
+  const tN=h[h.length-1][0],span=(tN-h[0][0])/864e5;
+  if(span<Math.max(2,H+1))return {why:`Historie zu kurz (${span.toFixed(1)} Tage)`};
+  const ps=h.map(x=>x[1]),L=q(ps,.3),cur=h[h.length-1][1],ent=[];let lastE=-1e15;
+  for(const [t,p] of h){if(p<=L&&t-lastE>=6*36e5&&t+H*864e5<=tN){ent.push([t,p]);lastE=t}}
+  const ratios=[];
+  for(const [t,p] of ent){
+    const win=h.filter(x=>x[0]>=t+H*.5*864e5&&x[0]<=t+H*864e5).map(x=>x[1]);
+    if(win.length>=2)ratios.push(q(win,.5)/p);
+  }
+  if(ratios.length<4)return {why:`zu wenige Vergleichsfälle (${ratios.length})`};
+  const r25=q(ratios,.25),med=q(ratios,.5),ref=Math.min(cur,L);
+  return {cur,L,ref,span,n:h.length,cases:ratios.length,hit:ratios.filter(r=>r*.95>1).length/ratios.length,
+    sellCons:Math.round(ref*r25),sellMed:Math.round(ref*med),roi:r25*.95-1,roiMed:med*.95-1};
+}
+// Aus allen Karten lernen, wann der Markt typischerweise guenstig bzw. teuer ist
+function learnWindows(cards){
+  const sum=new Array(42).fill(0),cnt=new Array(42).fill(0);
+  for(const c of cards){
+    if(c.h.length<24)continue;
+    const m=q(c.h.map(x=>x[1]),.5);if(!m)continue;
+    for(const [t,p] of c.h){const d=new Date(t),b=((d.getDay()+6)%7)*6+Math.floor(d.getHours()/4);sum[b]+=p/m;cnt[b]++}
+  }
+  const v=[];sum.forEach((s,i)=>{if(cnt[i]>=150)v.push([s/cnt[i],i])});
+  if(v.length<24)return null;
+  v.sort((a,b)=>a[0]-b[0]);
+  return {buy:v[0][1],sell:v[v.length-1][1],lo:v[0][0],hi:v[v.length-1][0]};
 }
 function render(){
   if(!D)return;
   const cards=Object.values(D.cards||{}).filter(c=>c.h&&c.h.length);
   $('stand').textContent=D.updated?`Preisstand: ${ago(Date.parse(D.updated))} · ${cards.length} Karten verfolgt`:'Noch keine Preise gesammelt.';
+  WIN=WIN||learnWindows(cards);
+  if(WIN){
+    $('bw').textContent=`${bl(WIN.buy)} (Ø ${((WIN.lo-1)*100).toFixed(1)} % zum Median)`;
+    $('sw').textContent=`${bl(WIN.sell)} (Ø +${((WIN.hi-1)*100).toFixed(1)} % zum Median)`;
+    $('wn').textContent='Aus den gesammelten Preisen aller Karten berechnet (Ø über alle Wochen).';
+  }else{
+    $('bw').textContent='Fr 18:00 – So 20:00';$('sw').textContent='Mo 18:00 – Mi 22:00';
+    $('wn').textContent='Faustregel – wird durch echte Daten ersetzt, sobald genug Historie da ist.';
+  }
   const coins=parseFloat($('coins').value)||0,share=(parseFloat($('share').value)||40)/100,minR=(parseFloat($('roi').value)||0)/100,H=parseInt($('hold').value)||3;
-  const f=H<=1?0.5:H<=3?0.75:0.9;let rem=coins,tot=0,prof=0,h='';
-  cards.map(c=>{
-    const s=stat(c),t=Math.round(s.lo+(s.hi-s.lo)*f),p=t*0.95-s.cur,roi=p/s.cur,lim=s.lo*1.05;
-    const sig=s.cur<=lim?['Jetzt kaufen','ok']:s.cur<=s.lo*1.12?['Beobachten','wa']:['Warten bis ≤ '+fmt(lim),'rd'];
-    const now=new Date(),buyAt=s.cur<=lim?now:nextIn(now,4*1440+1080,6*1440+1200),sellAt=nextIn(new Date(buyAt.getTime()+H*864e5),1080,2*1440+1320);
-    return {c,s,t,p,roi,lim,sig,buyAt,sellAt,sc:roi*Math.min(1,s.n/8)};
-  }).filter(x=>x.s.n>=3&&x.roi>=minR&&x.s.cur<=x.lim*1.12).sort((a,b)=>b.sc-a.sc).forEach(x=>{
-    const qy=Math.max(0,Math.min(Math.floor(coins*share/x.s.cur),Math.floor(rem/x.s.cur),25));
-    if(!qy)return;rem-=qy*x.s.cur;tot+=qy*x.s.cur;prof+=qy*x.p;
-    h+=`<div class="it"><div class="top"><b>${esc(x.c.name)} <span class="note">${x.c.rating} ${esc(x.c.pos)}</span></b><span class="pill ${x.sig[1]}">${x.sig[0]}</span></div><div class="kv"><span>Version</span><b>${esc(x.c.version)}</b><span>Aktueller Preis</span><b>${fmt(x.s.cur)}</b><span>Menge</span><b>${qy} Stk.</b><span>Einkauf bis</span><b>${fmt(x.lim)}</b><span>Verkaufsziel</span><b>${fmt(x.t)}</b><span>Gewinn/Stk. netto</span><b class="ok">${fmt(x.p)} (${(x.roi*100).toFixed(1)} %)</b><span>Kaufen</span><b>${fd(x.buyAt)}</b><span>Verkaufen ab</span><b>${fd(x.sellAt)}</b><span>Datenbasis</span><b>${x.s.n} Punkte / ${x.s.span.toFixed(1)} Tg.</b></div></div>`;
-  });
-  $('rec').innerHTML=h?`<div class="kv" style="margin:0 0 10px"><span>Investiert</span><b>${fmt(tot)}</b><span>Übrig</span><b>${fmt(rem)}</b><span>Erw. Gewinn</span><b class="ok">${fmt(prof)}</b></div>`+h:'<span class="note">Aktuell keine Karte, die dein Budget, deine Haltedauer und deinen Mindestgewinn erfüllt. Ab drei Messpunkten pro Karte werden Empfehlungen berechnet.</span>';
+  let rem=coins,tot=0,prof=0,h='',skipped=0;
+  const res=[];
+  for(const c of cards){
+    const a=analyze(c,H);
+    if(a.why){skipped++;continue}
+    if(a.roi>=minR&&a.hit>=.65&&a.cur<=a.L*1.08)res.push({c,a,sc:a.roi*a.hit*Math.min(1,a.cases/8)});
+  }
+  res.sort((x,y)=>y.sc-x.sc);
+  for(const {c,a} of res){
+    const qy=Math.max(0,Math.min(Math.floor(coins*share/a.ref),Math.floor(rem/a.ref),25));
+    if(!qy)continue;rem-=qy*a.ref;tot+=qy*a.ref;prof+=qy*(a.sellCons*.95-a.ref);
+    const now=new Date(),now_ok=a.cur<=a.L,buyAt=now_ok?now:(WIN?nextAtBucket(now,WIN.buy):nextIn(now,4*1440+1080,6*1440+1200)),
+      sellFrom=new Date(buyAt.getTime()+H*864e5),sellAt=WIN?nextAtBucket(sellFrom,WIN.sell):nextIn(sellFrom,1080,2*1440+1320);
+    h+=`<div class="it"><div class="top"><b>${esc(c.name)} <span class="note">${c.rating} ${esc(c.pos)}</span></b><span class="pill ${now_ok?'ok':'wa'}">${now_ok?'Jetzt kaufen':'Beobachten'}</span></div><div class="kv"><span>Version</span><b>${esc(c.version)}</b><span>Aktueller Preis</span><b>${fmt(a.cur)}</b><span>Menge</span><b>${qy} Stk.</b><span>Einkauf bis</span><b>${fmt(a.L)}</b><span>Verkaufsziel (konservativ)</span><b>${fmt(a.sellCons)}</b><span>Typischer Verkaufspreis</span><b>${fmt(a.sellMed)}</b><span>Gewinn/Stk. netto (konservativ)</span><b class="ok">${fmt(a.sellCons*.95-a.ref)} (${(a.roi*100).toFixed(1)} %)</b><span>Trefferquote</span><b>${Math.round(a.hit*100)} % von ${a.cases} Fällen</b><span>Kaufen</span><b>${fd(buyAt)}</b><span>Verkaufen ab</span><b>${fd(sellAt)}</b><span>Datenbasis</span><b>${a.n} Punkte / ${a.span.toFixed(0)} Tg.</b></div></div>`;
+  }
+  const info=`<p class="note" style="margin:10px 0 0">${skipped} Karten haben noch zu wenig Historie für die Haltedauer ${H} Tg. – sie werden mit jedem Lauf mehr.</p>`;
+  $('rec').innerHTML=(h?`<div class="kv" style="margin:0 0 10px"><span>Investiert</span><b>${fmt(tot)}</b><span>Übrig</span><b>${fmt(rem)}</b><span>Erw. Gewinn (konservativ)</span><b class="ok">${fmt(prof)}</b></div>`+h+`<p class="note" style="margin:8px 0 0">Das konservative Ziel ist der Preis, den die Karte in 75 % der Vergleichsfälle nach der Haltedauer mindestens erreichte (Median im Verkaufszeitraum).</p>`:'<span class="note">Aktuell keine Karte, die Haltedauer, Mindestgewinn und eine Trefferquote von mindestens 65 % erfüllt.</span>')+info;
 }
-function win(){
-  const n=new Date(),m=(n.getDay()+6)%7*1440+n.getHours()*60+n.getMinutes(),o=(a,b)=>m>=a&&m<b;
-  const t=x=>x?'<span class="ok">● jetzt offen</span>':'<span class="wa">○ geschlossen</span>';
-  $('bs').innerHTML=t(o(4*1440+1080,6*1440+1200));$('ss').innerHTML=t(o(1080,2*1440+1320));
+function renderEvents(){
+  if(!EV){$('ev').textContent='Noch keine Ereignisse geladen.';return}
+  const act=(EV.sbcs||[]).filter(s=>s.expiresAt&&s.expiresAt>Date.now()).sort((a,b)=>a.expiresAt-b.expiresAt);
+  let h=`<p class="note" style="margin:0 0 6px">Laufende SBCs (so im Spiel verfügbar) und offizielle EA-Meldungen. Keine Gerüchte, keine Prognosen. Stand: ${ago(Date.parse(EV.updated))}</p>`;
+  h+=act.slice(0,14).map(s=>`<div class="ev"><span><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>${s.reward?`<br><span class="note">${esc(s.reward).slice(0,90)}</span>`:''}</span><span style="text-align:right;white-space:nowrap">${s.cost?fmt(s.cost)+' Coins<br>':''}<span class="note">noch ${left(s.expiresAt)}</span></span></div>`).join('')||'<span class="note">Keine zeitlich begrenzten SBCs gefunden.</span>';
+  const news=(EV.news||[]).filter(n=>n.flag).slice(0,8);
+  if(news.length)h+=`<h2 style="margin:14px 0 4px">EA-Meldungen</h2>`+news.map(n=>`<div class="ev"><a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a><span class="note">${ago(n.first)}</span></div>`).join('');
+  $('ev').innerHTML=h;
 }
+async function getJ(f){try{const r=await fetch(f+'?'+Math.floor(Date.now()/60000),{cache:'no-store'});return r.ok?await r.json():null}catch(e){return null}}
 async function load(){
-  try{
-    const got=await Promise.all(['prices.json','prices-low.json'].map(f=>fetch(f+'?'+Math.floor(Date.now()/60000),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)));
-    const ok=got.filter(Boolean);
-    if(!ok.length)throw new Error('leer');
-    D={updated:ok.map(x=>x.updated).filter(Boolean).sort().pop()||null,cards:Object.assign({},...ok.map(x=>x.cards||{}))};
-    render();
-  }catch(e){$('stand').textContent='Preise konnten nicht geladen werden.'}
+  const [a,b,e]=await Promise.all([getJ('prices.json'),getJ('prices-low.json'),getJ('events.json')]);
+  const ok=[a,b].filter(Boolean);
+  if(!ok.length){$('stand').textContent='Preise konnten nicht geladen werden.';return}
+  D={updated:ok.map(x=>x.updated).filter(Boolean).sort().pop()||null,cards:Object.assign({},...ok.map(x=>x.cards||{}))};
+  EV=e;WIN=null;render();renderEvents();
 }
 ['coins','share','roi','hold'].forEach(i=>$(i).oninput=render);
 const sp=$('splash');setTimeout(()=>sp.classList.add('out'),2600);sp.onclick=()=>sp.classList.add('out');
-win();setInterval(win,60000);load();setInterval(load,900000);
+load();setInterval(load,900000);setInterval(renderEvents,60000);
 </script>
 </body>
 </html>
