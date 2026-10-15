@@ -130,7 +130,8 @@ h3{margin:16px 0 4px;font-size:12px;letter-spacing:.16em;text-transform:uppercas
       <div><label>Min. Gewinn netto (%)</label><input id="roi" type="number" value="5"></div>
       <div class="span"><label>Haltedauer</label><div class="seg" id="seg"><button data-v="1">1 Tag</button><button data-v="3" class="on">3 Tage</button><button data-v="7">7 Tage</button></div><select id="hold"><option value="3" selected>3</option></select></div>
     </div>
-    <label class="sw" style="margin-top:12px"><input type="checkbox" id="pv" checked> Vorläufige Empfehlungen anzeigen, solange die Historie noch kurz ist</label>
+    <label class="sw" style="margin-top:12px"><input type="checkbox" id="st"> Nur belastbare Empfehlungen (benötigt mehr Historie)</label>
+    <p class="note" style="margin:-4px 0 0">Aus: Empfehlungen mit den bisherigen Daten, bei kurzer Historie als „vorläufig“ markiert. An: nur Karten mit voller Historie für deine Haltedauer.</p>
   </section>
   <section class="panel"><h2>Empfehlungen</h2><div id="rec" class="note">Lade …</div></section>
 </div>
@@ -138,9 +139,8 @@ h3{margin:16px 0 4px;font-size:12px;letter-spacing:.16em;text-transform:uppercas
 <div class="tab" id="t-leaks">
   <section class="panel">
     <h2>Leaks von X</h2>
-    <p class="warn">Inoffizielle Meldungen von Leakern auf X und aus Medien. Sie können falsch sein oder von EA geändert werden.</p>
+    <p class="warn">Inoffizielle Meldungen von Leakern auf X. Sie können falsch sein oder von EA geändert werden.</p>
     <div class="src" id="src"></div>
-    <div class="fl" id="sf"><button data-s="all" class="on">Alle Quellen</button><button data-s="x">X</button><button data-s="news">Medien</button></div>
     <div class="fl" id="lf"><button data-f="all" class="on">Alle</button><button data-f="SBC">SBC</button><button data-f="Promo">Promo</button><button data-f="Icon/Hero">Icon/Hero</button><button data-f="Pack">Packs</button><button data-f="Markt">Markt</button></div>
     <label class="sw"><input type="checkbox" id="hp" checked> Prognosen und Spekulationen ausblenden</label>
     <div id="lk" class="note">Lade …</div>
@@ -226,7 +226,7 @@ function render(){
   let rem=coins,tot=0,prof=0,h='',skipped=0,maxSpan=0;
   const res=[];
   for(const c of cards){
-    const a=analyze(c,H,$('pv').checked);
+    const a=analyze(c,H,!$('st').checked);
     if(a.span>maxSpan)maxSpan=a.span;
     if(a.why){skipped++;continue}
     if(a.roi>=minR&&a.hit>=.65&&a.cur<=a.L*1.08)res.push({c,a,sc:a.roi*a.hit*Math.min(1,a.cases/8)});
@@ -242,7 +242,7 @@ function render(){
   }
   const need=Math.max(2,H+1);
   const info=`<p class="note" style="margin:12px 0 0">${fmt(skipped)} Karten haben noch zu wenig Historie für ${H} Tg. Haltedauer (nötig: mindestens ${need} Tage, längste aktuell ${maxSpan.toFixed(1)} Tage).</p>${res.some(x=>x.a.short)?'<p class="note" style="margin:6px 0 0">Als <b>vorläufig</b> markierte Karten rechnen mit einer kürzeren Haltedauer, weil die Historie noch kurz ist. Sie sind weniger belastbar als Empfehlungen mit voller Historie.</p>':''}`;
-  $('rec').innerHTML=(h?`<div class="stats"><div><span>Investiert</span><b>${fmt(tot)}</b></div><div><span>Übrig</span><b>${fmt(rem)}</b></div><div><span>Erw. Gewinn</span><b class="ok">+${fmt(prof)}</b></div></div><div class="recs">${h}</div><p class="note" style="margin:10px 0 0">Das konservative Ziel ist der Preis, den die Karte in 75 % der Vergleichsfälle nach der Haltedauer mindestens erreichte (Median im Verkaufszeitraum).</p>`:'<span class="note">Aktuell keine Karte, die Haltedauer, Mindestgewinn und eine Trefferquote von mindestens 65 % erfüllt.</span>')+info;
+  $('rec').innerHTML=(h?`<div class="stats"><div><span>Investiert</span><b>${fmt(tot)}</b></div><div><span>Übrig</span><b>${fmt(rem)}</b></div><div><span>Erw. Gewinn</span><b class="ok">+${fmt(prof)}</b></div></div><div class="recs">${h}</div><p class="note" style="margin:10px 0 0">Das konservative Ziel ist der Preis, den die Karte in 75 % der Vergleichsfälle nach der Haltedauer mindestens erreichte (Median im Verkaufszeitraum).</p>`:(maxSpan<need?`<span class="note">Für ${H} Tg. Haltedauer braucht die App mindestens ${need} Tage Historie, aktuell sind es ${maxSpan.toFixed(1)}. ${$('st').checked?'Schalte „Nur belastbare Empfehlungen“ aus, um Empfehlungen mit den aktuellen Daten zu sehen, oder wähle eine kürzere Haltedauer.':''}</span>`:'<span class="note">Aktuell keine Karte, die Haltedauer, Mindestgewinn und eine Trefferquote von mindestens 65 % erfüllt.</span>'))+info;
 }
 const norm=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function leakFor(name){
@@ -263,14 +263,14 @@ function renderLeaks(){
   const box=$('lk');if(!box)return;
   if(!LK){box.textContent='Noch keine Leaks geladen. Der Abruf läuft stündlich.';$('src').innerHTML='';$('lkc').textContent='';return}
   const cut=Date.now()-14*864e5;
-  LK.tweets=(LK.tweets||[]).filter(t=>t.t>=cut);
+  LK.tweets=(LK.tweets||[]).filter(t=>t.t>=cut&&t.kind!=='news');
   const accs=LK.accounts||{};
   $('src').innerHTML=Object.entries(accs).map(([h,i])=>`<span class="${i.ok?'good':'bad'}">${h==='Medien'?'':'@'}${esc(h)} ${i.ok?'✓ '+i.n:'nicht erreichbar'}</span>`).join('');
   const hide=$('hp').checked;
   let list=(LK.tweets||[]).filter(t=>(FIL==='all'||t.tags.includes(FIL))&&(SRC==='all'||(SRC==='x'?t.kind!=='news':t.kind==='news'))&&!(hide&&t.pred));
   const fresh=(LK.tweets||[]).filter(t=>t.t>Date.now()-864e5&&!(hide&&t.pred)).length;
   $('lkc').textContent=fresh?String(fresh):'';
-  box.innerHTML=(`<p class="note" style="margin:0 0 4px">Stand ${ago(Date.parse(LK.updated))} · ${list.length} Beiträge</p>`)+(list.slice(0,40).map(t=>`<article class="lk"><div class="av ${t.kind==='news'?'avn':''}">${esc((t.handle||'?')[0].toUpperCase())}</div><div class="lb"><div class="lh"><b>${t.kind==='news'?'':'@'}${esc(t.handle)}</b>${t.kind==='news'?'<span class="tag2">Medien</span>':''}<span class="note">· ${ago(t.t)}</span></div><div class="tx">${esc(t.text)}</div><div class="tg">${t.tags.map(x=>`<span>${esc(x)}</span>`).join('')}${t.pred?'<span class="pr2">PROGNOSE</span>':''}</div><a href="${esc(t.url)}" target="_blank" rel="noopener">${t.kind==='news'?'Artikel öffnen':'Auf X öffnen'} ↗</a></div></article>`).join('')||'<span class="note">Keine passenden Beiträge.</span>');
+  box.innerHTML=(`<p class="note" style="margin:0 0 4px">Stand ${ago(Date.parse(LK.updated))} · ${list.length} Beiträge</p>`)+(list.slice(0,40).map(t=>`<article class="lk"><div class="av ${t.kind==='news'?'avn':''}">${esc((t.handle||'?')[0].toUpperCase())}</div><div class="lb"><div class="lh"><b>${esc(t.kind==='news'?t.handle:(t.name&&t.name!==t.handle?t.name:'@'+t.handle))}</b>${t.kind==='news'?'<span class="tag2">Medien</span>':'<span class="note">@'+esc(t.handle)+'</span>'}<span class="note">· ${ago(t.t)}</span></div><div class="tx">${esc(t.text)}</div><div class="tg">${t.tags.map(x=>`<span>${esc(x)}</span>`).join('')}${t.pred?'<span class="pr2">PROGNOSE</span>':''}</div><a href="${esc(t.url)}" target="_blank" rel="noopener">${t.kind==='news'?'Artikel öffnen':'Auf X öffnen'} ↗</a></div></article>`).join('')||'<span class="note">Keine passenden Beiträge.</span>');
 }
 function renderMarket(){
   if(!D)return;
@@ -309,7 +309,7 @@ document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>showTab(b.dat
 document.querySelectorAll('#lf button').forEach(b=>b.onclick=()=>{FIL=b.dataset.f;document.querySelectorAll('#lf button').forEach(x=>x.classList.toggle('on',x===b));renderLeaks()});
 document.querySelectorAll('#sf button').forEach(b=>b.onclick=()=>{SRC=b.dataset.s;document.querySelectorAll('#sf button').forEach(x=>x.classList.toggle('on',x===b));renderLeaks()});
 $('hp').onchange=renderLeaks;
-$('pv').onchange=render;
+$('st').onchange=render;
 $('rec').onclick=e=>{const g=e.target.closest&&e.target.closest('[data-go]');if(g)showTab(g.dataset.go)};
 {const h=(location.hash||'').slice(1);if(['inv','leaks','mkt'].includes(h))showTab(h)}
 const sp=$('splash');setTimeout(()=>sp.classList.add('out'),2600);sp.onclick=()=>sp.classList.add('out');

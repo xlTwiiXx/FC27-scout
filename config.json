@@ -34,25 +34,18 @@
   "concurrency": 3,
   "maxPagesTotal": 500,
   "maxMinutes": 50,
-  "backfillPerRun": 100,
-  "backfillDelayMs": 3000,
-  "backfillMaxMinutes": 40,
-  "backfillMinRating": 75,
   "leakAccounts": [
-    "FUTPOLICE",
+    "Futdonk",
+    "FGZNews",
+    "FIFA22_INFO",
+    "WeaverFUT",
     "FutSheriff",
-    "DetectiveFUT",
-    "FUTxGG"
+    "FutPoliceLeaks",
+    "Rickth21",
+    "fifa_romania",
+    "AsyFutTrader"
   ],
   "leakKeepDays": 14,
   "leakMaxPerAccount": 80,
-  "leakDelayMs": 4000,
-  "newsQueries": [
-    "FC 27 leak",
-    "FC 27 SBC leak",
-    "FC 27 promo leak",
-    "FC 27 TOTW",
-    "FC 27 Ultimate Team Hero Icon"
-  ],
-  "newsMax": 25
+  "leakDelayMs": 4000
 }
