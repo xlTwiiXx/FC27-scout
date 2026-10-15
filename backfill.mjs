@@ -13,6 +13,7 @@ const cfg = {
 };
 const startedAt = Date.now();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const SCRIPT_VERSION = 2;
 const RELEASE = Date.UTC(2026, 8, 1); // Zeitstempel vor September 2026 sind nicht plausibel
 
 const FILES = { fast: 'prices.json', slow: 'prices-low.json' };
@@ -25,8 +26,9 @@ for (const [k, f] of Object.entries(FILES)) {
 // ---------- Reihen in beliebigem JSON finden ----------
 export function toPoint(x) {
   let t, p;
-  if (Array.isArray(x) && x.length >= 2 && typeof x[0] === 'number' && typeof x[1] === 'number') { t = x[0]; p = x[1]; }
-  else if (x && typeof x === 'object' && !Array.isArray(x)) {
+  if (Array.isArray(x) && x.length >= 2 && (typeof x[0] === 'number' || typeof x[0] === 'string') && typeof x[1] === 'number') {
+    t = typeof x[0] === 'string' ? Date.parse(x[0]) : x[0]; p = x[1];
+  } else if (x && typeof x === 'object' && !Array.isArray(x)) {
     for (const [k, v] of Object.entries(x)) {
       if (/date|time|^ts$|stamp|created|^x$/i.test(k)) t = typeof v === 'number' ? v : Date.parse(v);
       else if (/price|value|bin|coins|^p$|^y$/i.test(k) && typeof v === 'number') p = v;
@@ -45,7 +47,26 @@ export function extractSeries(node, out = []) {
     }
     for (const x of node) if (x && typeof x === 'object') extractSeries(x, out);
   } else if (node && typeof node === 'object') {
+    // parallele Arrays: {timestamps:[...], prices:[...]}
+    const ak = Object.keys(node).filter((k) => Array.isArray(node[k]) && node[k].length >= 5);
+    for (const ka of ak) for (const kb of ak) {
+      if (ka === kb || node[ka].length !== node[kb].length) continue;
+      if (/time|date|stamp|labels|^x$|^ts$/i.test(ka) && /price|value|^y$|data|coins|bin/i.test(kb)) {
+        const pts = node[ka].map((t, i) => toPoint([t, node[kb][i]])).filter(Boolean);
+        if (pts.length >= node[ka].length * 0.8) out.push(pts);
+      }
+    }
     for (const v of Object.values(node)) if (v && typeof v === 'object') extractSeries(v, out);
+  }
+  return out;
+}
+// Pfade im JSON, deren Schluessel nach Preis oder Historie klingen (nur fuer die Diagnose)
+export function findPaths(node, re, path = '$', out = [], depth = 0) {
+  if (out.length >= 10 || depth > 8 || !node || typeof node !== 'object') return out;
+  for (const [k, v] of Object.entries(node)) {
+    const p = Array.isArray(node) ? path + '[]' : path + '.' + k;
+    if (!Array.isArray(node) && re.test(k)) out.push(p + (Array.isArray(v) ? `[${v.length}]` : typeof v === 'object' ? '{}' : `=${String(v).slice(0, 20)}`));
+    if (v && typeof v === 'object' && !(Array.isArray(node) && +k > 0)) findPaths(v, re, p, out, depth + 1);
   }
   return out;
 }
@@ -54,7 +75,7 @@ export function extractSeries(node, out = []) {
 const cand = [];
 for (const [set, db] of Object.entries(dbs)) {
   for (const [id, e] of Object.entries(db.cards)) {
-    if (e.bf || !e.url || (e.rating || 0) < cfg.backfillMinRating) continue;
+    if ((e.bf === 1 || (e.bf === 2 && e.bfv === SCRIPT_VERSION)) || !e.url || (e.rating || 0) < cfg.backfillMinRating) continue;
     cand.push({ set, id, e, price: e.h.length ? e.h[e.h.length - 1][1] : 0 });
   }
 }
@@ -73,36 +94,66 @@ const ctx = await browser.newContext({
 
 async function grab(url, debug) {
   const page = await ctx.newPage();
+  const seen = [];
   const bodies = [];
-  const urls = [];
   page.on('response', (r) => {
     try {
+      const rt = r.request().resourceType();
       const ct = (r.headers()['content-type'] || '').toLowerCase();
-      if (!ct.includes('json')) return;
-      urls.push(r.url());
-      bodies.push(r.json().then((j) => ({ url: r.url(), j })).catch(() => null));
+      const u = r.url();
+      if (/\.(png|jpe?g|webp|gif|svg|ico|woff2?|ttf|css|js|mjs|map)(\?|$)/i.test(u)) return;
+      if (!(rt === 'xhr' || rt === 'fetch' || ct.includes('json') || /price|history|chart|market|graph/i.test(u))) return;
+      seen.push({ u, status: r.status(), rt, ct: ct.split(';')[0] });
+      bodies.push(r.text().then((t) => ({ u, t })).catch(() => null));
     } catch {}
   });
   try {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
-    await page.waitForTimeout(4000);
-    // Zeitraum-Reiter anklicken, damit auch lange Reihen nachgeladen werden
-    for (const label of ['All', 'All time', 'Season', 'Month', '1M', 'Max']) {
+    await page.waitForTimeout(3000);
+    // Seite scrollen (Diagramme laden oft erst, wenn sie sichtbar werden)
+    for (const f of [0.3, 0.6, 1]) {
+      try { await page.evaluate((x) => window.scrollTo(0, document.body.scrollHeight * x), f); } catch {}
+      await page.waitForTimeout(1200);
+    }
+    // Zeitraum-Schalter anklicken, damit auch lange Reihen nachgeladen werden
+    for (const re of [/^all( time)?$/i, /^max$/i, /^season$/i, /^(1 ?m|month)$/i, /^(1 ?w|week)$/i]) {
       try {
-        const el = page.getByRole('button', { name: new RegExp('^' + label + '$', 'i') }).first();
+        const el = page.locator('button,a,[role=tab],li').filter({ hasText: re }).first();
         if (await el.count()) { await el.click({ timeout: 1500 }); await page.waitForTimeout(1500); }
       } catch {}
     }
     await page.waitForTimeout(1500);
-    const got = (await Promise.all(bodies)).filter(Boolean);
-    let best = [];
-    for (const g of got) {
-      for (const s of extractSeries(g.j)) if (s.length > best.length) best = s;
+
+    const docs = [];
+    for (const g of (await Promise.all(bodies)).filter(Boolean)) {
+      try { docs.push({ src: g.u, j: JSON.parse(g.t) }); } catch {}
     }
+    // JSON, das fest in der Seite steckt (z. B. __NEXT_DATA__ oder andere Skript-Daten)
+    let scripts = [];
+    try {
+      scripts = await page.evaluate(() => [...document.scripts].map((s) => ({ id: s.id, type: s.type, text: s.textContent || '' })).filter((s) => s.text.length > 200).map((s) => ({ id: s.id, type: s.type, text: s.text.slice(0, 3000000) })));
+    } catch {}
+    for (const sc of scripts) {
+      let j = null;
+      try { j = JSON.parse(sc.text); } catch {
+        const i0 = Math.min(...['{', '['].map((c) => { const k = sc.text.indexOf(c); return k < 0 ? 1e12 : k; }));
+        const i1 = Math.max(sc.text.lastIndexOf('}'), sc.text.lastIndexOf(']'));
+        if (i0 < 1e12 && i1 > i0) { try { j = JSON.parse(sc.text.slice(i0, i1 + 1)); } catch {} }
+      }
+      if (j) docs.push({ src: 'Skript ' + (sc.id || sc.type || '?'), j });
+    }
+
+    let best = [];
+    for (const d of docs) for (const sr of extractSeries(d.j)) if (sr.length > best.length) best = sr;
+
     if (debug) {
-      console.log('  JSON-Antworten:', [...new Set(urls)].slice(0, 15).join(' | ') || '(keine)');
+      console.log(`  XHR/Fetch-Antworten (${seen.length}):`);
+      for (const x of seen.slice(0, 25)) console.log(`   - ${x.status} ${x.rt} ${x.ct || '-'} ${x.u.slice(0, 150)}`);
+      console.log(`  Seiten-Skripte mit Daten: ${scripts.map((x) => (x.id || x.type || 'inline') + ':' + x.text.length).join(', ') || '(keine)'}`);
+      const paths = [];
+      for (const d of docs) for (const pth of findPaths(d.j, /price|history|chart|series|graph/i)) paths.push(`${d.src.slice(-40)} ${pth}`);
+      console.log('  Pfade mit price/history:', paths.slice(0, 12).join(' | ') || '(keine)');
       console.log('  Reihe gefunden:', best.length, best.length ? `${new Date(best[0][0]).toISOString()} .. ${new Date(best[best.length - 1][0]).toISOString()}` : '-');
-      if (!best.length && got.length) console.log('  Beispiel:', JSON.stringify(got[0].j).slice(0, 300));
     }
     return best;
   } catch (e) {
@@ -129,9 +180,9 @@ for (const c of todo) {
       if (x[0] >= Date.now() - 3 * 864e5 || x[0] - last >= 4 * 36e5) { thinned.push(x); last = x[0]; }
     }
     c.e.h = thinned.concat(c.e.h);
-    c.e.bf = 1; ok++;
+    c.e.bf = 1; c.e.bfv = SCRIPT_VERSION; ok++;
   } else {
-    c.e.bf = 2; none++; // keine Reihe gefunden, nicht endlos wiederholen
+    c.e.bf = 2; c.e.bfv = SCRIPT_VERSION; none++; // keine Reihe gefunden
   }
   await sleep(cfg.backfillDelayMs + Math.random() * 1500);
 }
