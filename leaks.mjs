@@ -5,7 +5,7 @@ import fs from 'node:fs';
 
 const cfg = {
   leakAccounts: ['FUTPOLICE', 'FutSheriff', 'DetectiveFUT', 'FUTxGG'],
-  leakKeepDays: 21,
+  leakKeepDays: 14,
   leakMaxPerAccount: 80,
   leakDelayMs: 4000,
   newsQueries: ['FC 27 leak', 'FC 27 SBC leak', 'FC 27 promo leak', 'FC 27 TOTW', 'FC 27 Ultimate Team Hero Icon'],

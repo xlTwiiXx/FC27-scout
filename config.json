@@ -44,7 +44,7 @@
     "DetectiveFUT",
     "FUTxGG"
   ],
-  "leakKeepDays": 21,
+  "leakKeepDays": 14,
   "leakMaxPerAccount": 80,
   "leakDelayMs": 4000,
   "newsQueries": [

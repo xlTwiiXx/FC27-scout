@@ -262,6 +262,8 @@ function showTab(n){
 function renderLeaks(){
   const box=$('lk');if(!box)return;
   if(!LK){box.textContent='Noch keine Leaks geladen. Der Abruf läuft stündlich.';$('src').innerHTML='';$('lkc').textContent='';return}
+  const cut=Date.now()-14*864e5;
+  LK.tweets=(LK.tweets||[]).filter(t=>t.t>=cut);
   const accs=LK.accounts||{};
   $('src').innerHTML=Object.entries(accs).map(([h,i])=>`<span class="${i.ok?'good':'bad'}">${h==='Medien'?'':'@'}${esc(h)} ${i.ok?'✓ '+i.n:'nicht erreichbar'}</span>`).join('');
   const hide=$('hp').checked;
