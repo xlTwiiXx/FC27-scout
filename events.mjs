@@ -10,7 +10,7 @@ try { prev = JSON.parse(fs.readFileSync('events.json', 'utf8')); } catch {}
 const firstSeen = (list, key, v) => (list.find((x) => x[key] === v) || {}).first || now;
 
 const { chromium } = await import('playwright');
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, args: ['--disable-http2'] });
 const ctx = await browser.newContext({
   locale: 'en-US',
   viewport: { width: 1280, height: 900 },
