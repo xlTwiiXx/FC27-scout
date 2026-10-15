@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Dauerlauf: holt alle 15 Minuten (zu :00, :15, :30, :45 UTC) die Preise, einmal pro Stunde die Leaks,
+# Dauerlauf: holt alle 15 Minuten (zu :00, :15, :30, :45 UTC) die Preise und das aktuelle TOTW- und Event-Team, einmal pro Stunde die Leaks,
 # und speichert nach jedem Durchlauf in den Branch "data". Nach rund 5,5 Stunden startet sich der Lauf neu.
 # So haengt die Aktualisierung nicht am Zeitplan von GitHub, der oft verspaetet oder Laeufe auslaesst.
 set -u
@@ -42,6 +42,7 @@ while [ "$(date +%s)" -lt "$END" ]; do
   echo "=== Durchlauf $(date -u +%FT%TZ) ==="
   refresh_inputs
   node update.mjs || echo "update.mjs fehlgeschlagen, naechster Versuch im naechsten Durchlauf"
+  node teams.mjs || echo "teams.mjs fehlgeschlagen (TOTW/Event-Team bleiben auf dem letzten Stand)"
   H=$(date -u +%H)
   if [ "$H" != "$LAST_LEAK_HOUR" ]; then
     node leaks.mjs || echo "leaks.mjs fehlgeschlagen"

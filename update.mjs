@@ -24,8 +24,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const SETS = {
   // letzte Tage voll (15-Minuten-Raster), danach stuendlich, danach alle 4 Stunden
-  fast: { file: `${DIR}/prices.json`, fullDays: 1, midDays: 3, thinHours: 4, maxDays: 21 },
-  slow: { file: `${DIR}/prices-low.json`, fullDays: 1, midDays: 3, thinHours: 4, maxDays: 14 },
+  fast: { file: `${DIR}/prices.json`, maxDays: 120 },
+  slow: { file: `${DIR}/prices-low.json`, maxDays: 120 },
 };
 const dbs = {};
 for (const [k, s] of Object.entries(SETS)) {
@@ -115,6 +115,15 @@ async function directPage(ctx, url) {
 const t = Date.now();
 const hour = new Date().getUTCHours();
 const runSlow = cfg.slowRatings.length > 0 && (FORCE_ALL || hour % (cfg.slowEveryHours || 3) === 0);
+// Erstes Erscheinen jeder Karte (fs). 0 = war schon beim allerersten Abruf da (Erscheinungszeit unbekannt)
+const popAtStart = Object.values(dbs).reduce((n, d) => n + Object.keys(d.cards).length, 0);
+{
+  const firsts = [];
+  for (const d of Object.values(dbs)) for (const e of Object.values(d.cards)) if (e.h.length) firsts.push(e.h[0][0]);
+  firsts.sort((a, b) => a - b);
+  const T0 = firsts.length ? firsts[Math.floor(firsts.length * 0.1)] : 0;
+  for (const d of Object.values(dbs)) for (const e of Object.values(d.cards)) if (e.fs === undefined) e.fs = T0 && e.h.length && e.h[0][0] > T0 + 6 * 36e5 ? e.h[0][0] : 0;
+}
 const jobs = [
   ...cfg.ratings.map((r) => ({ r, set: 'fast' })),
   ...(runSlow ? cfg.slowRatings.map((r) => ({ r, set: 'slow' })) : []),
@@ -197,7 +206,7 @@ async function runJob(job) {
     if (!fresh.length) return;
     for (const c of fresh) {
       seen.add(c.id);
-      const e = db.cards[c.id] || { h: [] };
+      const e = db.cards[c.id] || { h: [], fs: popAtStart >= 200 ? t : 0 };
       Object.assign(e, { name: c.name, rating: c.rating, version: c.version, pos: c.pos, url: c.url });
       e.h.push([t, c.price]);
       db.cards[c.id] = e;
@@ -219,19 +228,39 @@ await b.browser.close();
 applyManual();
 if (total === 0) { console.error('Keine Daten erhalten, Dateien bleiben unveraendert.'); process.exit(1); }
 
+// Deutscher Kalendertag eines Zeitpunkts (Tage seit 1970 nach deutscher Zeit)
+const offCache = new Map();
+const offAt = (x) => { const k = Math.floor(x / 36e5); let v = offCache.get(k); if (v === undefined) { v = berlinOffsetMin(x); offCache.set(k, v); } return v; };
+const dayKey = (x) => Math.floor((x + offAt(x) * 6e4) / 864e5);
+const hourKey = (x) => Math.floor((x + offAt(x) * 6e4) / 36e5);
+// Heute: letzter Punkt jeder vollen Stunde plus Tagestief und Tageshoch. Vergangene Tage: nur Tief und Hoch (jeweils mit Uhrzeit).
+function condense(h, nowT) {
+  const today = dayKey(nowT), days = new Map();
+  for (const x of h) { const d = dayKey(x[0]); if (!days.has(d)) days.set(d, []); days.get(d).push(x); }
+  const out = [];
+  for (const [d, pts] of days) {
+    let mn = pts[0], mx = pts[0];
+    for (const x of pts) { if (x[1] < mn[1]) mn = x; if (x[1] > mx[1]) mx = x; }
+    if (d === today) {
+      const keep = new Map(), byHour = new Map();
+      for (const x of pts) byHour.set(hourKey(x[0]), x);
+      for (const x of byHour.values()) keep.set(x[0], x);
+      keep.set(mn[0], mn); keep.set(mx[0], mx);
+      out.push(...keep.values());
+    } else {
+      out.push(mn);
+      if (mx !== mn) out.push(mx);
+    }
+  }
+  return out.sort((a, b) => a[0] - b[0]);
+}
+
 for (const set of touched) {
   const s = SETS[set], db = dbs[set];
   const cutoff = t - s.maxDays * 864e5;
   for (const [id, e] of Object.entries(db.cards)) {
     e.h.sort((x, y) => x[0] - y[0]);
-    let last = 0;
-    e.h = e.h.filter((x) => {
-      if (x[0] < cutoff) return false;
-      const age = t - x[0];
-      const gap = age <= s.fullDays * 864e5 ? 0 : age <= s.midDays * 864e5 ? 36e5 : s.thinHours * 36e5;
-      if (x[0] - last >= gap) { last = x[0]; return true; }
-      return false;
-    });
+    e.h = condense(e.h.filter((x) => x[0] >= cutoff), t);
     if (!e.h.length) delete db.cards[id];
   }
   db.updated = new Date(t).toISOString();

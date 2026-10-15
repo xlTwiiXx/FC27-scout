@@ -128,6 +128,33 @@ input:focus{outline:2px solid var(--ac);outline-offset:0}
 @keyframes dr{to{stroke-dashoffset:0}}
 @keyframes fi{to{opacity:1}}
 @media (prefers-reduced-motion:reduce){#splash *,.dot{animation-duration:.01s!important;animation-delay:0s!important}}
+
+.nav button{font-size:10.5px}
+@media (min-width:820px){.nav button{font-size:14px}}
+.cr{cursor:pointer}
+.sheet{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.sheet[hidden]{display:none}
+.sh-bg{position:absolute;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.sh-body{position:relative;width:100%;max-width:720px;max-height:92vh;overflow:auto;background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--bd);border-radius:24px 24px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -20px 60px rgba(0,0,0,.5)}
+@media (min-width:820px){.sheet{align-items:center}.sh-body{border-radius:24px}}
+.sh-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.badge.sm{width:46px;padding:6px 0 8px;border-radius:10px 10px 20px 20px}.badge.sm b{font-size:19px}
+.shn{flex:1;min-width:0}.shn b{display:block;font-size:17px}.shn span{font-size:12px;font-weight:700}
+.shp{text-align:right}.shp b{display:block;font-size:20px}.shp span{font-size:12px;font-weight:700}
+.xb{border:0;background:rgba(255,255,255,.08);color:var(--tx);width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer;flex:none}
+.rdo{font-size:13.5px;font-weight:700;min-height:20px;margin:10px 0 4px}
+svg.chart{width:100%;height:auto;display:block;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.lgd{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--mu);margin:6px 0 10px}
+.shl{display:inline-block;margin-top:4px;font-size:13px;font-weight:700;color:var(--ac);text-decoration:none}
+
+.rbtn{width:100%;background:rgba(0,0,0,.28);color:var(--tx);border:1px solid var(--bd);border-radius:12px;padding:11px 12px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center}
+.ro{display:block;width:100%;text-align:left;background:rgba(0,0,0,.25);border:1px solid var(--bd);border-radius:16px;padding:13px 14px;margin-bottom:10px;color:var(--tx);font:inherit;cursor:pointer}
+.ro b{display:block;font-size:16px;margin-bottom:3px}.ro span{font-size:12.5px;color:var(--mu);display:block}
+.ro.on{border-color:var(--ac);background:linear-gradient(160deg,color-mix(in srgb,var(--ac) 20%,transparent),rgba(0,0,0,.2))}
+.net{font-size:12.5px;margin:2px 0 8px;padding:7px 9px;border-radius:10px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);line-height:1.5}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.calc{margin-top:12px;padding-top:4px;border-top:1px solid var(--bd)}
+.cres{margin-top:10px;font-size:14px;line-height:1.6}.cres b{font-size:16px}
 </style>
 </head>
 <body>
@@ -142,6 +169,7 @@ input:focus{outline:2px solid var(--ac);outline-offset:0}
 <nav class="nav" id="tabs">
   <button data-tab="inv" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Invest</button>
   <button data-tab="cheap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M17 7.5C17 5.6 14.8 4.5 12 4.5S7 5.7 7 7.7c0 4.6 10 2.6 10 7.6 0 2-2.2 3.2-5 3.2s-5-1.1-5-3"/></svg>Cheapest</button>
+  <button data-tab="event"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M12 13.2l1.1 2.2 2.4.3-1.7 1.7.4 2.4-2.2-1.2-2.2 1.2.4-2.4-1.7-1.7 2.4-.3z"/></svg>Event</button>
   <button data-tab="leaks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.5"/></svg>Leaks<span class="cnt" id="lkc"></span></button>
   <button data-tab="mkt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Markt</button>
 </nav>
@@ -151,7 +179,7 @@ input:focus{outline:2px solid var(--ac);outline-offset:0}
     <h2>Dein Plan</h2>
     <div class="g">
       <div><label>Budget (Coins)</label><input id="coins" type="text" inputmode="numeric" autocomplete="off" value="100.000"></div>
-      <div><label>Max. Anteil pro Karte (%)</label><input id="share" type="number" value="40"></div>
+      <div><label>Risiko</label><button class="rbtn" id="rbtn" type="button"><span id="rtx">Mittleres Risiko</span><span>▾</span></button></div>
       <div><label>Min. Gewinn netto (%)</label><input id="roi" type="number" value="5"></div>
       <div class="span"><label>Haltedauer</label><div class="seg" id="seg"><button data-v="1">1 Tag</button><button data-v="3" class="on">3 Tage</button><button data-v="7">7 Tage</button></div><select id="hold"><option value="3" selected>3</option></select></div>
     </div>
@@ -171,12 +199,17 @@ input:focus{outline:2px solid var(--ac);outline-offset:0}
   </section>
 </div>
 
+<div class="tab" id="t-event">
+  <section class="panel"><h2 id="evTh">TOTW</h2><p class="note" id="evTs" style="margin:0 0 6px"></p><div id="evTl"></div></section>
+  <section class="panel"><h2 id="evEh">Event-Team</h2><p class="note" id="evEs" style="margin:0 0 6px"></p><div id="evEl"></div></section>
+  <p class="note">Quelle: FUT.GG (Squads). Ein neues TOTW erscheint mittwochs ca. 19 Uhr, das Event-Team freitags ca. 19 Uhr. Die App holt es danach innerhalb von etwa 15 Minuten. Billigste Karte zuerst.</p>
+</div>
+
 <div class="tab" id="t-leaks">
   <section class="panel">
     <h2>Leaks von X</h2>
     <p class="warn">Inoffizielle Meldungen von Leakern auf X. Sie können falsch sein oder von EA geändert werden.</p>
     <div class="fl" id="lf"><button data-f="all" class="on">Alle</button><button data-f="SBC">SBC</button><button data-f="Promo">Promo</button><button data-f="TOTW">TOTW</button><button data-f="Pack">Packs</button><button data-f="Markt">Markt</button></div>
-    <label class="sw" style="margin-top:0"><input type="checkbox" id="hp" checked> Prognosen und Spekulationen ausblenden</label>
     <div id="lk" class="note">Lade …</div>
   </section>
 </div>
@@ -189,6 +222,25 @@ input:focus{outline:2px solid var(--ac);outline-offset:0}
 
 <p class="note">Keine Finanzberatung. Alle Zahlen beruhen auf dem günstigsten Sofortkauf-Preis von FUT.GG, nicht auf tatsächlich erzielten Verkäufen. Prüfe den Preis im Spiel vor dem Kauf. Bei vielen Karten auf einmal bewegst du den Markt selbst.</p>
 </main>
+<div class="sheet" id="rsk" hidden>
+  <div class="sh-bg" data-close></div>
+  <div class="sh-body">
+    <div class="sh-top"><div class="shn"><b>Risiko wählen</b><span class="note">Bestimmt, welche Karten dir empfohlen werden</span></div><button class="xb" data-close aria-label="Schließen">✕</button></div>
+    <div id="rkl"></div>
+  </div>
+</div>
+<div class="sheet" id="sheet" hidden>
+  <div class="sh-bg" data-close></div>
+  <div class="sh-body">
+    <div class="sh-top"><div id="shT" style="display:contents"></div><button class="xb" data-close aria-label="Schließen">✕</button></div>
+    <div class="seg" id="sg"><button data-v="today" class="on">Heute · stündlich</button><button data-v="days">Verlauf · Tief/Hoch</button></div>
+    <div class="rdo" id="rdo"></div>
+    <div id="chv"></div>
+    <div class="lgd" id="lgd"></div>
+    <div class="calc" id="calc"><h3 style="margin:8px 0 8px">Verkauf und Steuer (5 %)</h3><div class="g2"><div><label>Einkaufspreis</label><input id="cB" type="text" inputmode="numeric" autocomplete="off"></div><div><label>Verkaufspreis</label><input id="cS" type="text" inputmode="numeric" autocomplete="off"></div></div><div class="cres" id="cR"></div></div>
+    <a class="shl" id="shL" href="#" target="_blank" rel="noopener">Auf FUT.GG öffnen ↗</a>
+  </div>
+</div>
 <script>
 const $=id=>document.getElementById(id);
 const dots=n=>String(Math.round(Math.abs(n))).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
@@ -204,10 +256,35 @@ function nextAtBucket(d,b){const wd=Math.floor(b/6),h=(b%6)*4,t=new Date(d);for(
 const fdt=d=>d.toLocaleString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 const fd=d=>d-Date.now()<6e4?'jetzt':d.toLocaleString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 const hl=d=>d>=1?`${d} Tg.`:`${Math.round(d*24)} Std.`;
+const _bf=new Intl.DateTimeFormat('en-US',{timeZone:'Europe/Berlin',weekday:'short',hour:'2-digit',hourCycle:'h23'});
+const _df=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Berlin'});
+const WDI={Mon:0,Tue:1,Wed:2,Thu:3,Fri:4,Sat:5,Sun:6},_hc=new Map();
+function bt(t){ // deutsche Zeit, je Stunde zwischengespeichert
+  const k=Math.floor(t/36e5);let v=_hc.get(k);
+  if(!v){const o={};for(const p of _bf.formatToParts(new Date(k*36e5)))o[p.type]=p.value;v={wd:o.weekday,wi:WDI[o.weekday],h:+o.hour,d:_df.format(new Date(k*36e5))};_hc.set(k,v)}
+  return v;
+}
+const dayStr=t=>bt(t).d,minOf=t=>Math.floor(t/6e4)%60,dayNum=s=>Date.parse(s+'T00:00:00Z')/864e5;
+function lastRelease(wd,h){const now=Date.now();let t=now-now%36e5;for(let i=0;i<24*8;i++,t-=36e5){const p=bt(t);if(p.wd===wd&&p.h===h)return t}return null}
+const chOf=c=>{const [tN,pN]=c.h[c.h.length-1],ref=c.h.filter(x=>x[0]<=tN-23*36e5).pop();return ref&&ref[1]>0?(pN-ref[1])/ref[1]:null};
 const pct=x=>x==null?'–':(x>=0?'+':'')+(x*100).toFixed(1)+' %';
 let D=null,LK=null,WIN=null,FIL='all',CR=null;
 const RAW='https://raw.githubusercontent.com/xlTwiiXx/FC27-scout/data/';
 let MAIN=null;
+
+/* ---------- Risiko ---------- */
+const RISK={
+  low:{n:'Geringes Risiko',min:75,max:86,share:.10,cap:40,txt:'Futter und günstige Gold-Karten, Rating 75 bis 86. Viele Stück mit kleinen Einsätzen: höchstens 10 % deines Budgets pro Karte, bis 40 Stück.'},
+  mid:{n:'Mittleres Risiko',min:84,max:90,share:.25,cap:25,txt:'Mittelklasse, Rating 84 bis 90. Karten unter 84 werden nicht empfohlen. Höchstens 25 % deines Budgets pro Karte, bis 25 Stück.'},
+  high:{n:'Hohes Risiko',min:88,max:99,share:.50,cap:10,txt:'High-Rated, Rating 88 und höher. Teure Karten mit großen Einsätzen: bis zu 50 % deines Budgets pro Karte, bis 10 Stück.'}
+};
+let RK='mid';try{RK=localStorage.getItem('fc27risk')||'mid'}catch(e){}if(!RISK[RK])RK='mid';
+function setRisk(k){RK=k;try{localStorage.setItem('fc27risk',k)}catch(e){}$('rtx').textContent=RISK[k].n;render()}
+function openRisk(){
+  $('rkl').innerHTML=Object.entries(RISK).map(([k,r])=>`<button class="ro ${k===RK?'on':''}" data-k="${k}"><b>${r.n}</b><span>${r.txt}</span></button>`).join('');
+  $('rsk').hidden=false;document.body.style.overflow='hidden';
+}
+function closeRisk(){$('rsk').hidden=true;document.body.style.overflow=''}
 
 /* ---------- Kartendesigns (Special Cards) ---------- */
 const GOLD={bg:'linear-gradient(160deg,#fdf0a6,#e7bd3c 55%,#b88a14)',fg:'#2a1f00',ac:'#e7bd3c',sh:'inset 0 0 0 1px rgba(255,255,255,.45),0 8px 18px rgba(231,189,60,.28)'};
@@ -256,8 +333,9 @@ function zigzag(h,th){
   else if(mode===-1)out.push({t:lo[0],p:lo[1],k:'low',open:true});
   return out;
 }
-// Eine Karte wird nur empfohlen, wenn ihr Verlauf mindestens 2 (streng: 3) Anstiege von einem Tief auf ein bestaetigtes Hoch
-// innerhalb der Haltedauer zeigt, jeweils so gross, dass nach 5 % Steuer dein Mindestgewinn bleibt.
+// Eine Karte wird nur empfohlen, wenn ihr Verlauf mindestens 2 (streng: 3) Anstiege zeigt. Ein Anstieg zaehlt, wenn der Preis nach einem
+// Tief INNERHALB DER HALTEDAUER so weit stieg (hoechstens bis zum Hoch dieses Anstiegs), dass nach 5 % Steuer dein Mindestgewinn bleibt.
+// Eine laengere Haltedauer laesst langsame Anstiege voll zaehlen, eine kuerzere schneidet sie ab.
 function analyzeSwing(c,H,minR,strict){
   const h=c.h;
   if(h.length<6)return {why:'zu wenige Messpunkte',span:0};
@@ -266,7 +344,11 @@ function analyzeSwing(c,H,minR,strict){
   const th=Math.max(.08,(1+minR)/.95-1),pv=zigzag(h,th),ups=[];
   for(let i=0;i+1<pv.length;i++){
     const a=pv[i],b=pv[i+1];
-    if(a.k==='low'&&b.k==='high'&&!b.open&&b.t-a.t<=H*864e5)ups.push({lo:a,hi:b,r:b.p/a.p,d:b.t-a.t});
+    if(!(a.k==='low'&&b.k==='high'&&!b.open))continue;
+    const endT=Math.min(a.t+H*864e5,b.t);
+    let best=a.p,bT=a.t;
+    for(const x of h){if(x[0]>a.t&&x[0]<=endT&&x[1]>best){best=x[1];bT=x[0]}}
+    if(best/a.p>=1+th)ups.push({lo:a,hi:{t:bT,p:best},r:best/a.p,d:bT-a.t});
   }
   const need=strict?3:2;
   if(ups.length<need)return {why:`nur ${ups.length} Anstieg(e)`,span,ups:ups.length};
@@ -275,20 +357,26 @@ function analyzeSwing(c,H,minR,strict){
   const lastLow=[...pv].reverse().find(x=>x.k==='low'),broke=lastLow&&cur<lastLow.p*.92;
   const inZone=cur<=Lz,near=cur<=Lz*1.06,ref=Math.min(cur,Lz);
   const tail=pv.slice(-6),ev=tail.map((x,i)=>fmt(x.p)+(i<tail.length-1?(tail[i+1].p>x.p?' ↗ ':' ↘ '):'')).join('')+' → jetzt '+fmt(cur);
-  return {show:near&&!broke,inZone,cur,Lz,ref,span,ups:ups.length,rises:rec.map(u=>u.r-1),peaks:rec.map(u=>u.hi.t),dmin:Math.min(...rec.map(u=>u.d)),dmax:Math.max(...rec.map(u=>u.d)),sellCons:Math.round(ref*ratio),
+  return {show:near&&!broke,inZone,cur,Lz,ref,span,H,ups:ups.length,rises:rec.map(u=>u.r-1),peaks:rec.map(u=>u.hi.t),dmin:Math.min(...rec.map(u=>u.d)),dmax:Math.max(...rec.map(u=>u.d)),sellCons:Math.round(ref*ratio),
     roi:ratio*.95-1,dur,ev,sc:(ratio*.95-1)*Math.min(1,ups.length/3),n:h.length};
 }
+// Aus den Tiefs und Hochs jedes Tages (aller Karten) lernen, wann sie meist auftreten
 function learnWindows(cards){
-  const sum=new Array(42).fill(0),cnt=new Array(42).fill(0);
+  const lows=new Array(42).fill(0),highs=new Array(42).fill(0);let n=0;
+  const bk=t=>{const p=bt(t);return p.wi*6+Math.floor(p.h/4)};
   for(const c of cards){
-    if(c.h.length<24)continue;
-    const m=q(c.h.map(x=>x[1]),.5);if(!m)continue;
-    for(const [t,p] of c.h){const d=new Date(t),b=((d.getDay()+6)%7)*6+Math.floor(d.getHours()/4);sum[b]+=p/m;cnt[b]++}
+    const days={};
+    for(const x of c.h){const k=dayStr(x[0]);(days[k]=days[k]||[]).push(x)}
+    for(const k in days){
+      const pts=days[k];if(pts.length<2)continue;
+      let mn=pts[0],mx=pts[0];for(const x of pts){if(x[1]<mn[1])mn=x;if(x[1]>mx[1])mx=x}
+      if(mx[1]<mn[1]*1.03)continue;
+      lows[bk(mn[0])]++;highs[bk(mx[0])]++;n++;
+    }
   }
-  const v=[];sum.forEach((s,i)=>{if(cnt[i]>=150)v.push([s/cnt[i],i])});
-  if(v.length<24)return null;
-  v.sort((a,b)=>a[0]-b[0]);
-  return {buy:v[0][1],sell:v[v.length-1][1],lo:v[0][0],hi:v[v.length-1][0]};
+  if(n<400)return null;
+  const am=a=>a.indexOf(Math.max(...a)),i1=am(lows),i2=am(highs);
+  return {buy:i1,sell:i2,lo:lows[i1]/n,hi:highs[i2]/n,n};
 }
 
 /* ---------- Leaks-Zuordnung ---------- */
@@ -309,17 +397,18 @@ function render(){
   $('stand').textContent=D.updated?`Live · Preisstand ${ago(Date.parse(D.updated))} · ${fmt(cards.length)} Karten`:'Noch keine Preise gesammelt.';
   WIN=WIN||learnWindows(cards);
   if(WIN){
-    $('bw').textContent=`${bl(WIN.buy)} · Ø ${((WIN.lo-1)*100).toFixed(1)} %`;
-    $('sw').textContent=`${bl(WIN.sell)} · Ø +${((WIN.hi-1)*100).toFixed(1)} %`;
-    $('wn').textContent='Aus den gesammelten Preisen aller Karten berechnet (Abweichung vom Median der Karte).';
+    $('bw').textContent=`${bl(WIN.buy)} · ${Math.round(WIN.lo*100)} % der Tagestiefs`;
+    $('sw').textContent=`${bl(WIN.sell)} · ${Math.round(WIN.hi*100)} % der Tageshochs`;
+    $('wn').textContent=`Aus den Tiefs und Hochs jedes Tages aller Karten berechnet (${fmt(WIN.n)} Karten-Tage). Zeiten in deutscher Zeit.`;
   }else{
     $('bw').textContent='noch zu wenig Daten';$('sw').textContent='noch zu wenig Daten';
     $('wn').textContent='Die beste Zeit wird berechnet, sobald genug Preise gesammelt sind. Bis dahin zeigt die App keine Wochentage an.';
   }
-  const coins=num($('coins').value),share=(parseFloat($('share').value)||40)/100,minR=(parseFloat($('roi').value)||0)/100,H=parseInt($('hold').value)||3,strict=$('st').checked;
-  let rem=coins,tot=0,prof=0,html='',none=0,maxSpan=0;
+  const coins=num($('coins').value),minR=(parseFloat($('roi').value)||0)/100,H=parseInt($('hold').value)||3,strict=$('st').checked,R=RISK[RK];
+  const band=cards.filter(c=>c.rating>=R.min&&c.rating<=R.max);
+  let rem=coins,tot=0,prof=0,html='',none=0,maxSpan=0,tooExp=0;
   const res=[];
-  for(const c of cards){
+  for(const c of band){
     const a=analyzeSwing(c,H,minR,strict);
     if(a.span>maxSpan)maxSpan=a.span;
     if(a.why){none++;continue}
@@ -327,17 +416,19 @@ function render(){
   }
   res.sort((x,y)=>y.a.sc-x.a.sc);
   for(const {c,a} of res){
-    const qy=Math.max(0,Math.min(Math.floor(coins*share/a.ref),Math.floor(rem/a.ref),25));
-    if(!qy)continue;rem-=qy*a.ref;tot+=qy*a.ref;prof+=qy*(a.sellCons*.95-a.ref);
+    const qy=Math.max(0,Math.min(Math.floor(coins*R.share/a.ref),Math.floor(rem/a.ref),R.cap));
+    if(!qy){if(a.ref>coins*R.share)tooExp++;continue}rem-=qy*a.ref;tot+=qy*a.ref;prof+=qy*(a.sellCons*.95-a.ref);
     const lkm=leakFor(c.name),cs=cardStyle(c.version),now=new Date();
     const buyTxt=a.inZone?'jetzt':`sobald Preis ≤ ${fmt(a.Lz)}`;
     const t0=now.getTime(),rng=a.dmin===a.dmax?`ca. ${fdt(new Date(t0+a.dmin))}`:`ca. ${fdt(new Date(t0+a.dmin))} – ${fdt(new Date(t0+a.dmax))}`;
     const sellTxt=a.inZone?`${rng} oder bei ≥ ${fmt(a.sellCons)}`:`nach dem Kauf ca. ${dl(a.dmin)}${a.dmax!==a.dmin?' bis '+dl(a.dmax):''} später oder bei ≥ ${fmt(a.sellCons)}`;
-    html+=`<article class="pc"><div class="badge" style="background:${cs.bg};color:${cs.fg};box-shadow:${cs.sh}"><b>${c.rating}</b><span>${esc(c.pos)}</span></div><div class="pcb"><div class="pct"><div class="nm">${esc(c.name)}<span class="tag" style="color:${cs.ac};border-color:${cs.ac}">${esc(c.version)}</span></div><span class="sig ${a.inZone?'ok':'wa'}">${a.inZone?'Jetzt kaufen':'Beobachten'}</span></div><div class="pr">${fmt(a.cur)}<small> Coins aktuell</small></div><div class="evd"><span>Verlauf</span>${esc(a.ev)}</div><div class="trio"><div><span>Einkauf bis</span><b>${fmt(a.Lz)}</b></div><div><span>Ziel (kleinster Anstieg)</span><b>${fmt(a.sellCons)}</b></div><div><span>Gewinn/Stk.</span><b class="ok">+${fmt(a.sellCons*.95-a.ref)}</b></div></div><div class="hit"><span>${a.ups} Anstiege nachweisbar: ${a.rises.map(x=>'+'+Math.round(x*100)+' %').join(', ')} · typisch nach ${dl(a.dur)}</span></div><div class="tm"><span>Kaufen <b>${buyTxt}</b></span><span>Verkaufen <b>${sellTxt}</b></span></div><div class="pk">Bisherige Hochs: ${a.peaks.map(x=>fdt(new Date(x))).join(' · ')}</div><div class="ft">${qy} Stk. · ${(a.roi*100).toFixed(1)} % netto · ${a.n} Punkte / ${a.span<1?Math.round(a.span*24)+' Std.':a.span.toFixed(1)+' Tg.'}</div>${lkm?`<span class="lkchip" data-go="leaks">📡 In Leaks erwähnt · ${ago(lkm.t)}</span>`:''}</div></article>`;
+    const net=a.sellCons*.95;
+    html+=`<article class="pc" data-id="${esc(c.id)}"><div class="badge" style="background:${cs.bg};color:${cs.fg};box-shadow:${cs.sh}"><b>${c.rating}</b><span>${esc(c.pos)}</span></div><div class="pcb"><div class="pct"><div class="nm">${esc(c.name)}<span class="tag" style="color:${cs.ac};border-color:${cs.ac}">${esc(c.version)}</span></div><span class="sig ${a.inZone?'ok':'wa'}">${a.inZone?'Jetzt kaufen':'Beobachten'}</span></div><div class="pr">${fmt(a.cur)}<small> Coins aktuell</small></div><div class="evd"><span>Verlauf</span>${esc(a.ev)}</div><div class="trio"><div><span>Einkauf bis</span><b>${fmt(a.Lz)}</b></div><div><span>Ziel (kleinster Anstieg)</span><b>${fmt(a.sellCons)}</b></div><div><span>Gewinn/Stk.</span><b class="ok">+${fmt(net-a.ref)}</b></div></div><div class="net">Verkauf für <b>${fmt(a.sellCons)}</b> → du erhältst <b class="ok">${fmt(net)}</b> nach 5 % Steuer (${fmt(a.sellCons*.05)} Steuer)</div><div class="hit"><span>${a.ups} Anstiege nachweisbar, innerhalb von ${H} Tg.: ${a.rises.map(x=>'+'+Math.round(x*100)+' %').join(', ')} · typisch nach ${dl(a.dur)}</span></div><div class="tm"><span>Kaufen <b>${buyTxt}</b></span><span>Verkaufen <b>${sellTxt}</b></span></div><div class="pk">Bisherige Hochs: ${a.peaks.map(x=>fdt(new Date(x))).join(' · ')}</div><div class="ft">${qy} Stk. · ${(a.roi*100).toFixed(1)} % netto · ${a.n} Punkte / ${a.span<1?Math.round(a.span*24)+' Std.':a.span.toFixed(1)+' Tg.'}</div>${lkm?`<span class="lkchip" data-go="leaks">📡 In Leaks erwähnt · ${ago(lkm.t)}</span>`:''}</div></article>`;
   }
   const need=strict?3:2;
-  const info=`<p class="note" style="margin:12px 0 0">${fmt(none)} von ${fmt(cards.length)} Karten haben noch keine ${need} nachweisbaren Anstiege innerhalb von ${H} Tg. (längste Historie: ${maxSpan.toFixed(1)} Tage).</p><p class="note" style="margin:6px 0 0">Ein Anstieg zählt nur, wenn der Preis von einem Tief auf ein bestätigtes Hoch stieg und nach 5 % Steuer dein Mindestgewinn blieb. Das Ziel ist der kleinste der letzten Anstiege.</p>`;
-  const empty=`<span class="note">Aktuell keine Karte mit ${need} nachweisbaren Anstiegen, die jetzt im Einkaufsbereich liegt. ${maxSpan<Math.max(2,H+1)?'Die Historie ist noch kurz (längste '+maxSpan.toFixed(1)+' Tage), mit jedem Lauf kommen mehr Karten dazu.':''}</span>`;
+  const cnt=[1,3,7].map(Hx=>{let n=0;for(const c of band){const a=analyzeSwing(c,Hx,minR,strict);if(!a.why&&a.show)n++}return n});
+  const info=(tooExp?`<p class="note" style="margin:12px 0 0;color:var(--wa)">${tooExp} weitere Karten passen zu deinen Einstellungen, kosten aber mehr als ${Math.round(R.share*100)} % deines Budgets (${fmt(coins*R.share)} Coins) und werden deshalb nicht empfohlen. Erhöhe das Budget oder wähle ein höheres Risiko.</p>`:'')+`<p class="note" style="margin:12px 0 0">${R.n}: geprüft werden Karten mit Rating ${R.min} bis ${R.max} (${fmt(band.length)} von ${fmt(cards.length)}). ${fmt(none)} davon haben noch keine ${need} nachweisbaren Anstiege innerhalb von ${H} Tg. (längste Historie: ${maxSpan.toFixed(1)} Tage).</p><p class="note" style="margin:6px 0 0">Treffer nach Haltedauer mit deinen Einstellungen: 1 Tag → ${cnt[0]} · 3 Tage → ${cnt[1]} · 7 Tage → ${cnt[2]}. Sind die Zahlen gleich, stiegen die gefundenen Karten jeweils schon innerhalb eines Tages, dann ändert die Haltedauer nichts.</p><p class="note" style="margin:6px 0 0">Ein Anstieg zählt nur, wenn der Preis nach einem Tief innerhalb der Haltedauer so weit stieg, dass nach 5 % Steuer dein Mindestgewinn blieb. Das Ziel ist der kleinste der letzten Anstiege.</p>`;
+  const empty=`<span class="note">Aktuell keine Karte im Bereich „${R.n}“ (Rating ${R.min}–${R.max}) mit ${need} nachweisbaren Anstiegen, die jetzt im Einkaufsbereich liegt. ${maxSpan<Math.max(2,H+1)?'Die Historie ist noch kurz (längste '+maxSpan.toFixed(1)+' Tage), mit jedem Lauf kommen mehr Karten dazu.':''}</span>`;
   $('rec').innerHTML=(html?`<div class="stats"><div><span>Investiert</span><b>${fmt(tot)}</b></div><div><span>Übrig</span><b>${fmt(rem)}</b></div><div><span>Erw. Gewinn</span><b class="ok">+${fmt(prof)}</b></div></div><div class="recs">${html}</div>`:empty)+info;
 }
 function cheapData(){
@@ -349,6 +440,10 @@ function cheapData(){
   }
   for(const r in by)by[r].sort((a,b)=>a.p-b.p);
   return by;
+}
+function rowHTML(x){
+  const cs=cardStyle(x.c.version);
+  return `<div class="cr" data-id="${esc(x.c.id)}"><span class="mb" style="background:${cs.bg};color:${cs.fg};box-shadow:${cs.sh}"><b>${x.c.rating}</b><i>${esc(x.c.pos)}</i></span><div class="cn"><b>${esc(x.c.name)}</b><span style="color:${cs.ac}">${esc(x.c.version)}</span></div><div class="cp"><b>${fmt(x.p)}</b><span class="${x.ch==null?'note':x.ch>=0?'ok':'rd'}">${pct(x.ch)}</span></div></div>`;
 }
 function renderCheap(){
   if(!D)return;
@@ -362,7 +457,7 @@ function renderCheap(){
   const on=$('ov').querySelector('button.on');if(on&&on.scrollIntoView)on.scrollIntoView({inline:'center',block:'nearest'});
   const l=by[CR];
   $('chh').textContent=`Cheapest ${CR} · ${l.length} Karten am Markt`;
-  $('chl').innerHTML=l.slice(0,15).map((x,i)=>(()=>{const cs=cardStyle(x.c.version);return `<a class="cr" href="${esc(x.c.url||'#')}" target="_blank" rel="noopener"><span class="mb" style="background:${cs.bg};color:${cs.fg};box-shadow:${cs.sh}"><b>${x.c.rating}</b><i>${esc(x.c.pos)}</i></span><div class="cn"><b>${esc(x.c.name)}</b><span style="color:${cs.ac}">${esc(x.c.version)}</span></div><div class="cp"><b>${fmt(x.p)}</b><span class="${x.ch==null?'note':x.ch>=0?'ok':'rd'}">${pct(x.ch)}</span></div></a>`})()).join('');
+  $('chl').innerHTML=l.slice(0,15).map(rowHTML).join('');
 }
 const tagsOf=t=>{const a=(t.tags||[]).slice();if(/totw|team of the week/i.test(t.text)&&!a.includes('TOTW'))a.push('TOTW');return a};
 function renderLeaks(){
@@ -370,9 +465,9 @@ function renderLeaks(){
   if(!LK){box.textContent='Noch keine Leaks geladen. Der Abruf läuft stündlich.';$('lkc').textContent='';return}
   const cut=Date.now()-14*864e5;
   LK.tweets=(LK.tweets||[]).filter(t=>t.t>=cut&&t.kind!=='news');
-  const accs=LK.accounts||{},hide=$('hp').checked,isT=FIL==='TOTW';
-  const list=LK.tweets.filter(t=>(FIL==='all'||tagsOf(t).includes(FIL))&&(isT||!(hide&&t.pred)));
-  const fresh=LK.tweets.filter(t=>t.t>Date.now()-864e5&&!(hide&&t.pred)).length;
+  const accs=LK.accounts||{},isT=FIL==='TOTW';
+  const list=LK.tweets.filter(t=>FIL==='all'||tagsOf(t).includes(FIL));
+  const fresh=LK.tweets.filter(t=>t.t>Date.now()-864e5).length;
   $('lkc').textContent=fresh?String(fresh):'';
   const head=`<p class="note" style="margin:0 0 6px">Stand ${ago(Date.parse(LK.updated))} · ${list.length} Beiträge${isT?' · TOTW-Ansicht: gepostete Teams als Leak oder Prognose, jeweils markiert':''}</p>`;
   const bad=Object.values(accs).length&&Object.values(accs).every(i=>!i.ok);
@@ -381,6 +476,109 @@ function renderLeaks(){
     const mg=(t.media&&t.media.length)?`<div class="mg n${Math.min(t.media.length,4)}">${t.media.map(u=>`<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`).join('')}</div>`:'';
     const tg=tagsOf(t).filter(x=>x!=='Icon/Hero').map(x=>`<span>${esc(x)}</span>`).join('')+(isT||t.pred?`<span class="${t.pred?'pr2':'lkb'}">${t.pred?'PROGNOSE':'LEAK'}</span>`:'');
     return `<article class="lk"><div class="av">${ini}${av?`<img src="${esc(av)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</div><div class="lb"><div class="lh"><b>${esc(t.name&&t.name!==t.handle?t.name:'@'+t.handle)}</b><span class="note">@${esc(t.handle)} · ${ago(t.t)}</span></div><div class="tx">${esc(t.text)}</div>${mg}<div class="tg">${tg}</div><a href="${esc(t.url)}" target="_blank" rel="noopener">Auf X öffnen ↗</a></div></article>`}).join('')||`<span class="note">${bad?'Die X-Konten waren beim letzten Abruf nicht erreichbar.':'Keine passenden Beiträge.'}</span>`);
+}
+let TM=null;
+function renderEvent(){
+  if(!D)return;
+  const byKey=new Map();
+  for(const c of Object.values(D.cards))byKey.set(norm(c.name)+'|'+c.rating+'|'+norm(c.version),c);
+  const build=team=>{
+    const items=team.cards.map(tc=>{
+      const c=(tc.id&&D.cards[tc.id])||byKey.get(norm(tc.name)+'|'+tc.rating+'|'+norm(tc.version))||null;
+      return {tc,c,p:c&&c.h&&c.h.length?c.h[c.h.length-1][1]:null};
+    }).sort((a,b)=>((a.p==null)-(b.p==null))||((a.p||0)-(b.p||0)));
+    const priced=items.filter(x=>x.p!=null);
+    const html=items.map(x=>{
+      if(x.c&&x.p!=null)return rowHTML({c:x.c,p:x.p,ch:chOf(x.c)});
+      const cs=cardStyle(x.tc.version);
+      return `<div class="cr" style="cursor:default"><span class="mb" style="background:${cs.bg};color:${cs.fg};box-shadow:${cs.sh}"><b>${x.tc.rating}</b><i>–</i></span><div class="cn"><b>${esc(x.tc.name)}</b><span style="color:${cs.ac}">${esc(x.tc.version)}</span></div><div class="cp"><b>–</b><span class="note">kein Marktpreis</span></div></div>`;
+    }).join('');
+    return {html,n:items.length,np:priced.length,sum:priced.reduce((s,x)=>s+x.p,0)};
+  };
+  const day=t=>t?new Date(t).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'}):'';
+  const fill=(team,h2,sub,list,label,fallback)=>{
+    if(!team){$(h2).textContent=label;$(sub).textContent=fallback;$(list).innerHTML='';return}
+    const r=build(team);
+    $(h2).textContent=team.name.toUpperCase().startsWith(label.toUpperCase())?team.name:`${label} · ${team.name}`;
+    $(sub).textContent=`${team.date?'veröffentlicht '+day(team.date)+' · ':''}${r.n} Karten · Teamwert ${fmt(r.sum)}${r.np<r.n?' ('+r.np+' mit Marktpreis)':''} · billigste zuerst`;
+    $(list).innerHTML=r.html;
+  };
+  const upd=TM&&TM.updated?` · Stand ${ago(Date.parse(TM.updated))}`:'';
+  fill(TM&&TM.totw,'evTh','evTs','evTl','TOTW',TM?'Noch kein TOTW-Team geladen.':'Noch nicht geladen. Die Teams holt der Job von FUT.GG.');
+  fill(TM&&TM.event,'evEh','evEs','evEl','Event-Team',TM?'Noch kein Event-Team geladen.':'Noch nicht geladen. Die Teams holt der Job von FUT.GG.');
+  if(TM&&TM.totw)$('evTs').textContent+=upd;
+}
+/* ---------- Detailfenster mit Diagramm ---------- */
+let SH=null,SHV='today',CHX=null;
+function openCard(id){
+  const c=D&&D.cards[id];if(!c)return;
+  SH=c;SHV='today';
+  const cs=cardStyle(c.version),p=c.h[c.h.length-1][1],ch=chOf(c);
+  $('shT').innerHTML=`<div class="badge sm" style="background:${cs.bg};color:${cs.fg};box-shadow:${cs.sh}"><b>${c.rating}</b><span>${esc(c.pos)}</span></div><div class="shn"><b>${esc(c.name)}</b><span style="color:${cs.ac}">${esc(c.version)}</span></div><div class="shp"><b>${fmt(p)}</b><span class="${ch==null?'note':ch>=0?'ok':'rd'}">${pct(ch)} ca. 24 Std.</span></div>`;
+  $('shL').href=c.url||'#';
+  const an=analyzeSwing(c,parseInt($('hold').value)||3,(parseFloat($('roi').value)||0)/100,false);
+  $('cB').value=dots(p);$('cS').value=dots(!an.why&&an.sellCons>p?an.sellCons:Math.round(p*1.1));
+  calc();
+  document.querySelectorAll('#sg button').forEach(b=>b.classList.toggle('on',b.dataset.v===SHV));
+  $('sheet').hidden=false;document.body.style.overflow='hidden';
+  drawChart();
+}
+function calc(){
+  const b=num($('cB').value),s=num($('cS').value),net=s*.95,pf=net-b;
+  $('cR').innerHTML=s?`Verkaufst du für <b>${fmt(s)}</b>, erhältst du <b class="ok">${fmt(net)}</b> (nach 5 % Steuer, das sind ${fmt(s*.05)} Coins).${b?`<br>Gewinn bei Einkauf für ${fmt(b)}: <b class="${pf>=0?'ok':'rd'}">${pf>=0?'+':''}${fmt(pf)}</b> (${pct(b?pf/b:null)})`:''}`:'Gib einen Verkaufspreis ein.';
+}
+function closeSheet(){$('sheet').hidden=true;document.body.style.overflow='';SH=null}
+function drawChart(){
+  const c=SH;if(!c)return;
+  const W=640,HH=300,L=62,R=16,T=14,B=30,pw=W-L-R,ph=HH-T-B;
+  const minR=(parseFloat($('roi').value)||0)/100,Hd=parseInt($('hold').value)||3;
+  const a=analyzeSwing(c,Hd,minR,false);
+  let pts=[],ticks=[],xmin,xmax,lines=[],marks=[],bars=[];
+  if(SHV==='today'){
+    const today=dayStr(Date.now()),byH=new Map();
+    for(const x of c.h)if(dayStr(x[0])===today)byH.set(bt(x[0]).h,x);
+    pts=[...byH.values()].sort((u,v)=>u[0]-v[0]).map(x=>({x:bt(x[0]).h+minOf(x[0])/60,p:x[1],txt:`${String(bt(x[0]).h).padStart(2,'0')} Uhr · ${fmt(x[1])}`}));
+    xmin=0;xmax=24;for(let v=0;v<=24;v+=3)ticks.push({x:v,l:`${v}`});
+  }else{
+    const days=new Map();
+    for(const x of c.h){const k=dayStr(x[0]),d=days.get(k)||{mn:x,mx:x};if(x[1]<d.mn[1])d.mn=x;if(x[1]>d.mx[1])d.mx=x;days.set(k,d)}
+    const keys=[...days.keys()].sort(),n0=dayNum(keys[0]),n1=dayNum(keys[keys.length-1]);
+    xmin=n0;xmax=n1+1;
+    const tx=t=>dayNum(dayStr(t))+(bt(t).h+minOf(t)/60)/24;
+    for(const k of keys){const d=days.get(k),dn=dayNum(k),[dd,mm]=[k.slice(8),k.slice(5,7)];
+      bars.push({x:dn+.5,lo:d.mn[1],hi:d.mx[1],txt:`${dd}.${mm}. · Tief ${fmt(d.mn[1])} · Hoch ${fmt(d.mx[1])}`})}
+    const step=Math.max(1,Math.ceil(keys.length/6));
+    keys.forEach((k,i)=>{if(i%step===0)ticks.push({x:dayNum(k)+.5,l:`${k.slice(8)}.${k.slice(5,7)}.`})});
+    const th=Math.max(.08,(1+minR)/.95-1);
+    for(const q of zigzag(c.h,th))marks.push({x:tx(q.t),p:q.p,k:q.k,open:q.open});
+    if(a&&a.Lz){lines.push({p:a.Lz,l:'Einkauf bis',c:'var(--ok)'});lines.push({p:a.sellCons,l:'Ziel',c:'var(--gold)'})}
+  }
+  if(!pts.length&&!bars.length){$('chv').innerHTML='<p class="note">Für heute gibt es noch keine Preispunkte.</p>';$('rdo').textContent='';$('lgd').textContent='';return}
+  const vals=[...pts.map(q=>q.p),...bars.flatMap(b=>[b.lo,b.hi]),...lines.map(l=>l.p)];
+  let lo=Math.min(...vals),hi=Math.max(...vals);if(hi===lo){lo*=.99;hi*=1.01}
+  const pad=(hi-lo)*.08;lo-=pad;hi+=pad;
+  const X=v=>L+(v-xmin)/(xmax-xmin)*pw,Y=v=>T+(1-(v-lo)/(hi-lo))*ph;
+  let s=`<svg class="chart" id="cs" viewBox="0 0 ${W} ${HH}" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="fa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--ac);stop-opacity:.35"/><stop offset="1" style="stop-color:var(--ac);stop-opacity:0"/></linearGradient></defs>`;
+  for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4,y=Y(v);s+=`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" style="stroke:var(--bd)" stroke-width="1"/><text x="${L-6}" y="${y+4}" text-anchor="end" style="fill:var(--mu)" font-size="11">${fmt(v)}</text>`}
+  for(const t of ticks)s+=`<text x="${X(t.x)}" y="${HH-8}" text-anchor="middle" style="fill:var(--mu)" font-size="11">${t.l}</text>`;
+  for(const l of lines)s+=`<line x1="${L}" y1="${Y(l.p)}" x2="${W-R}" y2="${Y(l.p)}" style="stroke:${l.c}" stroke-width="1.5" stroke-dasharray="6 5"/><text x="${W-R-2}" y="${Y(l.p)-4}" text-anchor="end" style="fill:${l.c}" font-size="11" font-weight="700">${l.l} ${fmt(l.p)}</text>`;
+  const items=[];
+  if(pts.length){
+    const d=pts.map((q,i)=>`${i?'L':'M'}${X(q.x).toFixed(1)} ${Y(q.p).toFixed(1)}`).join(' ');
+    s+=`<path d="${d} L${X(pts[pts.length-1].x).toFixed(1)} ${T+ph} L${X(pts[0].x).toFixed(1)} ${T+ph} Z" fill="url(#fa)"/><path d="${d}" fill="none" style="stroke:var(--ac)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    for(const q of pts){s+=`<circle cx="${X(q.x)}" cy="${Y(q.p)}" r="3.4" style="fill:var(--ac)"/>`;items.push({x:X(q.x),y:Y(q.p),txt:q.txt})}
+  }
+  const bw=Math.max(3,Math.min(14,pw/Math.max(1,bars.length)*.45));
+  for(const b of bars){s+=`<line x1="${X(b.x)}" y1="${Y(b.hi)}" x2="${X(b.x)}" y2="${Y(b.lo)}" style="stroke:var(--ac2)" stroke-width="${bw}" stroke-linecap="round" opacity=".85"/><circle cx="${X(b.x)}" cy="${Y(b.hi)}" r="${bw/2+1}" style="fill:var(--gold)"/><circle cx="${X(b.x)}" cy="${Y(b.lo)}" r="${bw/2+1}" style="fill:var(--ok)"/>`;items.push({x:X(b.x),y:Y((b.hi+b.lo)/2),txt:b.txt})}
+  for(const m of marks){const x=X(m.x),y=Y(m.p);s+=m.k==='high'?`<path d="M${x} ${y-14}l5 -9h-10z" style="fill:var(--gold)"/>`:`<path d="M${x} ${y+14}l5 9h-10z" style="fill:var(--ok)"/>`}
+  s+=`<line id="cx" x1="0" y1="${T}" x2="0" y2="${T+ph}" style="stroke:var(--mu)" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/></svg>`;
+  $('chv').innerHTML=s;
+  CHX={items,L,R,W,T,ph};
+  const last=items[items.length-1];$('rdo').textContent=last?last.txt:'';
+  $('lgd').innerHTML=SHV==='today'?'<span>Letzter Preis jeder vollen Stunde (deutsche Zeit)</span>':'<span style="color:var(--gold)">● Hoch</span><span style="color:var(--ok)">● Tief</span><span>▲ ▼ bestätigte Wendepunkte</span><span>gestrichelt: Einkauf bis / Ziel (falls die Karte nachweisbare Anstiege hat)</span>';
+  const svg=$('cs');
+  const mv=e=>{const r=svg.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W;let best=null,bd=1e9;for(const it of CHX.items){const d=Math.abs(it.x-x);if(d<bd){bd=d;best=it}}if(best){$('rdo').textContent=best.txt;const cx=$('cx');cx.setAttribute('x1',best.x);cx.setAttribute('x2',best.x);cx.setAttribute('visibility','visible')}};
+  svg.addEventListener('pointermove',mv);svg.addEventListener('pointerdown',mv);
 }
 function renderMarket(){
   if(!D)return;
@@ -392,7 +590,7 @@ function renderMarket(){
     mv.push({c,p:pN,ch:(pN-ref[1])/ref[1]});
   }
   mv.sort((a,b)=>b.ch-a.ch);
-  const row=x=>`<div class="mr"><div>${esc(x.c.name)} <span>${x.c.rating} ${esc(x.c.pos)}</span></div><div><b class="${x.ch>=0?'ok':'rd'}">${pct(x.ch)}</b> <span>${fmt(x.p)}</span></div></div>`;
+  const row=x=>`<div class="mr" data-id="${esc(x.c.id)}" style="cursor:pointer"><div>${esc(x.c.name)} <span>${x.c.rating} ${esc(x.c.pos)}</span></div><div><b class="${x.ch>=0?'ok':'rd'}">${pct(x.ch)}</b> <span>${fmt(x.p)}</span></div></div>`;
   $('up').innerHTML=mv.slice(0,6).filter(x=>x.ch>0).map(row).join('')||'<span class="note">Noch keine Daten über 24 Std.</span>';
   $('dn').innerHTML=mv.slice(-6).reverse().filter(x=>x.ch<0).map(row).join('')||'<span class="note">Noch keine Daten über 24 Std.</span>';
   const spans=Object.values(D.cards||{}).filter(c=>c.h&&c.h.length>1).map(c=>(c.h[c.h.length-1][0]-c.h[0][0])/864e5);
@@ -408,15 +606,17 @@ async function getJ(f){
 }
 function rebuild(){
   if(!MAIN)return;
+  for(const [id,c] of Object.entries(MAIN.cards))c.id=id;
   D={updated:MAIN.updated,cards:MAIN.cards};WIN=null;
 }
 async function load(){
-  const [a,b,l]=await Promise.all([getJ('prices.json'),getJ('prices-low.json'),getJ('leaks.json')]);
+  const [a,b,l,tm]=await Promise.all([getJ('prices.json'),getJ('prices-low.json'),getJ('leaks.json'),getJ('teams.json')]);
+  TM=tm;
   const ok=[a,b].filter(Boolean);
   LK=l;
   if(!ok.length){$('stand').textContent='Preise konnten nicht geladen werden.';renderLeaks();return}
   MAIN={updated:ok.map(x=>x.updated).filter(Boolean).sort().pop()||null,cards:Object.assign({},...ok.map(x=>x.cards||{}))};
-  rebuild();render();renderCheap();renderLeaks();renderMarket();
+  rebuild();render();renderCheap();renderEvent();renderLeaks();renderMarket();
 }
 function showTab(n){
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+n));
@@ -437,7 +637,11 @@ function fmtInput(el){
   try{el.setSelectionRange(i,i)}catch(e){}
 }
 $('coins').oninput=()=>{fmtInput($('coins'));render()};
-['share','roi'].forEach(i=>$(i).oninput=render);
+$('roi').oninput=render;
+$('rbtn').onclick=openRisk;
+$('rtx').textContent=RISK[RK].n;
+$('rkl').onclick=e=>{const b=e.target.closest&&e.target.closest('[data-k]');if(b){setRisk(b.dataset.k);closeRisk()}};
+$('rsk').onclick=e=>{if(e.target.closest&&e.target.closest('[data-close]'))closeRisk()};
 $('st').onchange=render;
 document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
@@ -446,15 +650,20 @@ document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 document.querySelectorAll('#lf button').forEach(b=>b.onclick=()=>{FIL=b.dataset.f;document.querySelectorAll('#lf button').forEach(x=>x.classList.toggle('on',x===b));renderLeaks()});
 document.querySelectorAll('#th button').forEach(b=>b.onclick=()=>setTheme(b.dataset.t));
-$('hp').onchange=renderLeaks;
 $('ov').onclick=e=>{const b=e.target.closest&&e.target.closest('[data-r]');if(b){CR=+b.dataset.r;renderCheap()}};
 $('rec').onclick=e=>{const g=e.target.closest&&e.target.closest('[data-go]');if(g)showTab(g.dataset.go)};
 {let t='violet';try{t=localStorage.getItem('fc27theme')||'violet'}catch(e){}if(!['violet','ocean','pitch','gold','red'].includes(t))t='violet';setTheme(t)}
-{const h=(location.hash||'').slice(1);if(['inv','cheap','leaks','mkt'].includes(h))showTab(h)}
+document.querySelectorAll('#sg button').forEach(b=>b.onclick=()=>{SHV=b.dataset.v;document.querySelectorAll('#sg button').forEach(x=>x.classList.toggle('on',x===b));drawChart()});
+$('cB').oninput=()=>{fmtInput($('cB'));calc()};
+$('cS').oninput=()=>{fmtInput($('cS'));calc()};
+$('sheet').onclick=e=>{if(e.target.closest&&e.target.closest('[data-close]'))closeSheet()};
+const openFrom=e=>{if(e.target.closest&&e.target.closest('[data-go]'))return;const r=e.target.closest&&e.target.closest('[data-id]');if(r)openCard(r.dataset.id)};
+['chl','evTl','evEl','up','dn','rec'].forEach(id=>$(id).addEventListener('click',openFrom));
+{const h=(location.hash||'').slice(1);if(['inv','cheap','event','leaks','mkt'].includes(h))showTab(h)}
 ['gesturestart','gesturechange','gestureend'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault()));
 document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault()},{passive:false});
 const sp=$('splash');setTimeout(()=>sp.classList.add('out'),2600);sp.onclick=()=>sp.classList.add('out');
-load();setInterval(load,600000);
+load();setInterval(load,900000);
 </script>
 </body>
 </html>
