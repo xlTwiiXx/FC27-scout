@@ -1,4 +1,9 @@
 {
   "ratings": [86, 87, 88, 89, 90, 91],
-  "pages": 1
+  "pages": 6,
+  "mode": "auto",
+  "delayMs": 4000,
+  "maxPagesTotal": 60,
+  "maxMinutes": 40,
+  "apifyPagesPerRating": 1
 }
