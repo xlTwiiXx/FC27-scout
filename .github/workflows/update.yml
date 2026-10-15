@@ -39,4 +39,16 @@ jobs:
           git config user.name "scout-bot"
           git config user.email "scout-bot@users.noreply.github.com"
           git add prices*.json events.json
-          git diff --cached --quiet || (git commit -m "Daten aktualisiert" && git pull --rebase -q && git push)
+          git diff --cached --quiet && { echo "Nichts zu speichern"; exit 0; }
+          mkdir -p /tmp/keep && cp prices*.json events.json /tmp/keep/
+          for i in 1 2 3; do
+            git fetch -q origin main
+            git reset -q --hard origin/main
+            cp /tmp/keep/* .
+            git add prices*.json events.json
+            git diff --cached --quiet && { echo "Schon aktuell"; exit 0; }
+            git commit -q -m "Daten aktualisiert"
+            git push -q && { echo "Gespeichert"; exit 0; }
+            sleep 5
+          done
+          exit 1
