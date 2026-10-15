@@ -63,11 +63,21 @@ function parseLines(lines) {
   return { pos: pos || '?', price };
 }
 
+const isBlock = (res) =>
+  res.status >= 400 || /just a moment|attention required|access denied|verify you are human/i.test(res.title || '') || (!res.status && !!res.error);
+
 async function directPage(ctx, url) {
   const page = await ctx.newPage();
+  let status = 0;
   try {
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
-    await page.waitForSelector('a[href*="/27-"] img', { timeout: 25000 });
+    const resp = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    status = resp ? resp.status() : 0;
+    // warten, bis Karten da sind ODER die Seite eine leere Liste zeigt
+    await page.waitForFunction(
+      () => document.querySelector('a[href*="/27-"] img') || /no (players|results)|nothing (found|here)/i.test(document.body.innerText),
+      null,
+      { timeout: 25000 }
+    );
     await page.waitForTimeout(2500);
     const title = await page.title();
     const raw = await page.evaluate(() => {
@@ -89,9 +99,11 @@ async function directPage(ctx, url) {
       const x = parseLines(c.lines);
       if (x) cards.push({ id: c.id, name: c.name.trim(), rating: c.rating, version: c.version.trim(), pos: x.pos, price: x.price, url: c.url });
     }
-    return { cards, title };
+    return { cards, title, status };
   } catch (e) {
-    return { cards: [], error: String(e.message).split('\n')[0] };
+    let title = '';
+    try { title = await page.title(); } catch {}
+    return { cards: [], error: String(e.message).split('\n')[0], title, status };
   } finally {
     await page.close();
   }
@@ -110,7 +122,7 @@ let b;
 try { b = await openBrowser(); }
 catch (e) { console.error('Browser nicht verfuegbar:', e.message); process.exit(1); }
 
-let pages = 0, total = 0, blocked = false;
+let pages = 0, total = 0, blocked = false, hardBlocks = 0;
 const touched = new Set();
 const stop = () => blocked || pages >= cfg.maxPagesTotal || (Date.now() - startedAt) / 60000 > cfg.maxMinutes;
 
@@ -120,14 +132,19 @@ async function runJob(job) {
   for (let p = 1; p <= cfg.pages; p++) {
     if (stop()) { console.log(`Rating ${job.r}: Limit erreicht, Rest folgt im naechsten Lauf.`); return; }
     let res = await directPage(b.ctx, listUrl(job.r, p)); pages++;
-    if (!res.cards.length && p === 1) {
+    if (!res.cards.length && p === 1 && isBlock(res)) {
       await sleep(6000);
       res = await directPage(b.ctx, listUrl(job.r, p)); pages++;
     }
     const cards = res.cards;
     if (!cards.length && p === 1) {
-      console.error(`Rating ${job.r}: leer oder blockiert (${res.error || res.title || '-'})`);
-      blocked = true;
+      if (isBlock(res)) {
+        hardBlocks++;
+        console.error(`Rating ${job.r}: blockiert (Status ${res.status || '-'}, ${res.title || res.error || '-'})`);
+        if (hardBlocks >= 3) blocked = true;
+      } else {
+        console.log(`Rating ${job.r}: keine Karten auf dem Markt, uebersprungen.`);
+      }
       return;
     }
     if (!cards.length) return; // Ende der Liste
