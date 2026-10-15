@@ -2,8 +2,8 @@ name: update-prices
 
 on:
   schedule:
-    - cron: "0 */4 * * *"   # alle 4 Stunden (UTC). Nach erfolgreichem Test auf "0 * * * *" (stuendlich) stellen.
-  workflow_dispatch:         # Knopf zum manuellen Starten
+    - cron: "0 * * * *"      # jede Stunde (UTC)
+  workflow_dispatch:         # Knopf zum manuellen Starten (laedt dann ALLE Ratings)
 
 permissions:
   contents: write
@@ -15,7 +15,7 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 58
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,9 +29,10 @@ jobs:
         run: node update.mjs
         env:
           APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          FORCE_ALL: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
       - name: Speichern
         run: |
           git config user.name "scout-bot"
           git config user.email "scout-bot@users.noreply.github.com"
-          git add prices.json
-          git diff --cached --quiet || (git commit -m "Preise aktualisiert" && git push)
+          git add prices*.json
+          git diff --cached --quiet || (git commit -m "Preise aktualisiert" && git pull --rebase -q && git push)
