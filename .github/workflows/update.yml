@@ -2,54 +2,80 @@ name: update-prices
 
 on:
   schedule:
-    - cron: "0 * * * *"      # jede Stunde (UTC)
-  workflow_dispatch:         # manueller Start (laedt dann ALLE Ratings)
+    - cron: "*/15 * * * *"   # alle 15 Minuten (UTC)
+  workflow_dispatch:         # manueller Start
 
 permissions:
   contents: write
 
 concurrency:
-  group: scout-data          # gemeinsam mit backfill: nie gleichzeitig
+  group: scout-data          # es laeuft immer nur ein Lauf; ein weiterer wartet
   cancel-in-progress: false
+
+env:
+  DATA_DIR: data
 
 jobs:
   run:
     runs-on: ubuntu-24.04
-    timeout-minutes: 58
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Daten holen (Branch data)
+        run: |
+          mkdir -p "$DATA_DIR"
+          if git fetch -q --depth=1 origin data 2>/dev/null; then
+            for f in prices.json prices-low.json leaks.json; do
+              git show FETCH_HEAD:$f > "$DATA_DIR/$f" 2>/dev/null || rm -f "$DATA_DIR/$f"
+            done
+            echo "Daten aus dem Branch data geladen"
+          else
+            for f in prices.json prices-low.json leaks.json; do
+              if [ -f "$f" ]; then cp "$f" "$DATA_DIR/$f"; fi
+            done
+            echo "Branch data fehlt noch, Start mit den Dateien aus main"
+          fi
+          ls -la "$DATA_DIR"
+
       - name: Browser installieren
         run: |
           npm install --no-save playwright@1.48.2
           npx playwright install --with-deps chromium
+
       - name: Preise holen
         run: node update.mjs
         env:
           FORCE_ALL: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
-      - name: Leaks holen (X)
+
+      - name: Leaks holen (X, einmal pro Stunde)
         if: always()
-        run: node leaks.mjs
         continue-on-error: true
-      - name: Speichern
-        if: always()
         run: |
+          if [ "$(date -u +%M)" -lt 15 ] || [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            node leaks.mjs
+          else
+            echo "Leaks werden nur einmal pro Stunde geholt."
+          fi
+
+      - name: Speichern (Branch data, ohne Verlauf)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd "$DATA_DIR"
+          if [ ! -f prices.json ]; then echo "Keine Daten zum Speichern"; exit 0; fi
+          git init -q -b data
           git config user.name "scout-bot"
           git config user.email "scout-bot@users.noreply.github.com"
-          FILES=$(ls prices*.json leaks.json 2>/dev/null | tr '\n' ' ')
-          git add $FILES
-          git diff --cached --quiet && { echo "Nichts zu speichern"; exit 0; }
-          mkdir -p /tmp/keep && cp $FILES /tmp/keep/
+          git add -A
+          git commit -q -m "Daten $(date -u +%FT%TZ)"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           for i in 1 2 3; do
-            git fetch -q origin main
-            git reset -q --hard origin/main
-            cp /tmp/keep/* .
-            git add $FILES
-            git diff --cached --quiet && { echo "Schon aktuell"; exit 0; }
-            git commit -q -m "Daten aktualisiert"
-            git push -q && { echo "Gespeichert"; exit 0; }
+            git push -q -f origin data && { echo "Gespeichert"; exit 0; }
             sleep 5
           done
           exit 1
