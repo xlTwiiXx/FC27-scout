@@ -1,0 +1,37 @@
+name: update-prices
+
+on:
+  schedule:
+    - cron: "0 */4 * * *"   # alle 4 Stunden (UTC). Nach erfolgreichem Test auf "0 * * * *" (stuendlich) stellen.
+  workflow_dispatch:         # Knopf zum manuellen Starten
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-prices
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Browser installieren
+        run: |
+          npm install --no-save playwright@1.48.2
+          npx playwright install --with-deps chromium
+      - name: Preise holen
+        run: node update.mjs
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+      - name: Speichern
+        run: |
+          git config user.name "scout-bot"
+          git config user.email "scout-bot@users.noreply.github.com"
+          git add prices.json
+          git diff --cached --quiet || (git commit -m "Preise aktualisiert" && git push)
