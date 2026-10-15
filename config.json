@@ -1,7 +1,7 @@
 {
   "ratings": [99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83],
   "slowRatings": [82, 81, 80, 79, 78, 77, 76, 75],
-  "slowEveryHours": 3,
+  "slowEveryHours": 1,
   "pages": 60,
   "delayMs": 4000,
   "concurrency": 3,
@@ -10,5 +10,9 @@
   "backfillPerRun": 100,
   "backfillDelayMs": 3000,
   "backfillMaxMinutes": 40,
-  "backfillMinRating": 75
+  "backfillMinRating": 75,
+  "leakAccounts": ["FUTPOLICE", "FutSheriff", "DetectiveFUT", "FUTxGG"],
+  "leakKeepDays": 21,
+  "leakMaxPerAccount": 80,
+  "leakDelayMs": 4000
 }
