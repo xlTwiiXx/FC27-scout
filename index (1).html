@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FC 27 Trading Scout</title>
+<style>
+:root{--bg:#fbf1f1;--card:#fff;--tx:#2a1215;--mu:#7a5a5e;--bd:#ecd5d7;--ac:#0a8f5b;--wa:#b86e00;--rd:#c0392b;--in:#f8e9ea;--br:#c8102e;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--bg:#14090b;--card:#1f1013;--tx:#f6e9ea;--mu:#b39196;--bd:#3a1d22;--ac:#2fd08a;--wa:#f0a030;--rd:#ff8a7a;--in:#2a1519;--br:#ff3b4e}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:4px 0 2px}h2{font-size:16px;margin:0 0 10px}
+.note{color:var(--mu);font-size:13px}
+.card{background:var(--card);border:1px solid var(--bd);border-top:3px solid var(--br);border-radius:12px;padding:14px;margin-bottom:14px}
+label{display:block;font-size:12px;color:var(--mu);margin-bottom:3px}
+input,select{width:100%;background:var(--in);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:9px;font:inherit}
+.g{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;background:var(--in);white-space:nowrap}
+.ok{color:var(--ac)}.wa{color:var(--wa)}.rd{color:var(--rd)}
+.win{display:grid;grid-template-columns:1fr 1fr;gap:10px}.win div{background:var(--in);border-radius:10px;padding:10px}.win b{display:block;font-size:13px}
+.it{border-top:1px solid var(--bd);padding:12px 0}.it:first-child{border-top:0;padding-top:0}
+.top{display:flex;justify-content:space-between;gap:8px;align-items:center}.top b{font-size:16px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;font-size:13px;margin-top:6px}.kv span{color:var(--mu)}
+.hd{display:flex;align-items:center;gap:10px}.hd svg{width:40px;height:40px;flex:none}
+#splash{position:fixed;inset:0;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(circle at 50% 40%,#9b1021,#2a0509 70%);color:#fff;transition:opacity .6s,visibility .6s}
+#splash.out{opacity:0;visibility:hidden}
+#splash svg{width:120px;height:120px;animation:pop .8s cubic-bezier(.2,1.4,.4,1) both}
+#splash .ln{stroke-dasharray:90;stroke-dashoffset:90;animation:dr .9s .5s ease-out forwards}
+#splash .ah{opacity:0;animation:fi .3s 1.3s forwards}
+#splash b{letter-spacing:.28em;font-size:20px;opacity:0;animation:fi .6s 1s forwards}
+#splash i{font-style:normal;font-size:12px;letter-spacing:.35em;opacity:0;animation:fi .6s 1.3s forwards;color:#ffc9cf}
+@keyframes pop{from{transform:scale(.4) rotate(-12deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes dr{to{stroke-dashoffset:0}}
+@keyframes fi{to{opacity:1}}
+@media (prefers-reduced-motion:reduce){#splash *{animation-duration:.01s!important;animation-delay:0s!important}}
+</style>
+</head>
+<body>
+<div id="splash"><svg viewBox="0 0 64 64" aria-label="Logo"><defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d5a"/><stop offset="1" stop-color="#a30a1c"/></linearGradient></defs><path d="M32 4 56 13v19c0 14-10 24-24 29C18 56 8 46 8 32V13z" fill="url(#g2)" stroke="#fff" stroke-opacity=".85" stroke-width="1.5"/><circle cx="32" cy="32" r="17" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.5"/><path d="M32 12v6M32 46v6M12 32h6M46 32h6" stroke="#fff" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/><polyline class="ln" points="17,42 26,34 32,38 45,23" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path class="ah" d="M40 21h9v9z" fill="#fff"/></svg><b>TRADING SCOUT</b><i>FC 27</i></div>
+<main>
+<div class="hd"><svg viewBox="0 0 64 64" aria-label="Logo"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d5a"/><stop offset="1" stop-color="#a30a1c"/></linearGradient></defs><path d="M32 4 56 13v19c0 14-10 24-24 29C18 56 8 46 8 32V13z" fill="url(#g1)"/><circle cx="32" cy="32" r="17" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.5"/><path d="M32 12v6M32 46v6M12 32h6M46 32h6" stroke="#fff" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/><polyline points="17,42 26,34 32,38 45,23" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 21h9v9z" fill="#fff"/></svg><h1>FC 27 Trading Scout</h1></div>
+<p class="note" id="stand">Lade Preise …</p>
+
+<div class="card">
+  <h2>Dein Plan</h2>
+  <div class="g">
+    <div><label>Budget (Coins)</label><input id="coins" type="number" inputmode="numeric" value="100000"></div>
+    <div><label>Haltedauer</label><select id="hold"><option value="1">1 Tag</option><option value="3" selected>3 Tage</option><option value="7">7 Tage</option></select></div>
+    <div><label>Max. Anteil pro Karte (%)</label><input id="share" type="number" value="40"></div>
+    <div><label>Min. Gewinn netto (%)</label><input id="roi" type="number" value="5"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Zeitfenster (Faustregel)</h2>
+  <div class="win">
+    <div><b>Einkaufen</b>Fr 18:00 – So 20:00<div id="bs" class="note"></div></div>
+    <div><b>Verkaufen</b>Mo 18:00 – Mi 22:00<div id="ss" class="note"></div></div>
+  </div>
+</div>
+
+<div class="card"><h2>Empfehlungen</h2><div id="rec" class="note">Lade …</div></div>
+<p class="note">Keine Finanzberatung. Die Preise sind Sofortkauf-Preise von FUT.GG und können sich schnell ändern – prüfe sie im Spiel vor dem Kauf. Bei vielen Karten auf einmal bewegst du den Markt selbst. Die Empfehlungen werden mit jedem neuen Messpunkt verlässlicher.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>Math.round(n).toLocaleString('de-DE');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ago=t=>{const m=Math.round((Date.now()-t)/60000);return m<1?'gerade eben':m<60?`vor ${m} Min.`:m<1440?`vor ${Math.round(m/60)} Std.`:`vor ${Math.round(m/1440)} Tg.`};
+const q=(a,p)=>{const s=[...a].sort((x,y)=>x-y);return s[Math.min(s.length-1,Math.max(0,Math.round((s.length-1)*p)))]};
+function nextIn(d,a,b){const t=new Date(d);for(let i=0;i<216;i++){const m=(t.getDay()+6)%7*1440+t.getHours()*60+t.getMinutes();if(m>=a&&m<b)return t;t.setHours(t.getHours()+1,0,0,0)}return new Date(d)}
+const fd=d=>d-Date.now()<6e4?'jetzt':d.toLocaleString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+let D=null;
+function stat(c){
+  const h=c.h,w=h.filter(x=>x[0]>Date.now()-7*864e5),use=w.length>=2?w:h,ps=use.map(x=>x[1]),big=ps.length>=10,last=h[h.length-1];
+  return {cur:last[1],last:last[0],lo:big?q(ps,.1):Math.min(...ps),hi:big?q(ps,.9):Math.max(...ps),n:h.length,span:(last[0]-h[0][0])/864e5};
+}
+function render(){
+  if(!D)return;
+  const cards=Object.values(D.cards||{}).filter(c=>c.h&&c.h.length);
+  $('stand').textContent=D.updated?`Preisstand: ${ago(Date.parse(D.updated))} · ${cards.length} Karten verfolgt`:'Noch keine Preise gesammelt.';
+  const coins=parseFloat($('coins').value)||0,share=(parseFloat($('share').value)||40)/100,minR=(parseFloat($('roi').value)||0)/100,H=parseInt($('hold').value)||3;
+  const f=H<=1?0.5:H<=3?0.75:0.9;let rem=coins,tot=0,prof=0,h='';
+  cards.map(c=>{
+    const s=stat(c),t=Math.round(s.lo+(s.hi-s.lo)*f),p=t*0.95-s.cur,roi=p/s.cur,lim=s.lo*1.05;
+    const sig=s.cur<=lim?['Jetzt kaufen','ok']:s.cur<=s.lo*1.12?['Beobachten','wa']:['Warten bis ≤ '+fmt(lim),'rd'];
+    const now=new Date(),buyAt=s.cur<=lim?now:nextIn(now,4*1440+1080,6*1440+1200),sellAt=nextIn(new Date(buyAt.getTime()+H*864e5),1080,2*1440+1320);
+    return {c,s,t,p,roi,lim,sig,buyAt,sellAt,sc:roi*Math.min(1,s.n/8)};
+  }).filter(x=>x.s.n>=3&&x.roi>=minR&&x.s.cur<=x.lim*1.12).sort((a,b)=>b.sc-a.sc).forEach(x=>{
+    const qy=Math.max(0,Math.min(Math.floor(coins*share/x.s.cur),Math.floor(rem/x.s.cur),25));
+    if(!qy)return;rem-=qy*x.s.cur;tot+=qy*x.s.cur;prof+=qy*x.p;
+    h+=`<div class="it"><div class="top"><b>${esc(x.c.name)} <span class="note">${x.c.rating} ${esc(x.c.pos)}</span></b><span class="pill ${x.sig[1]}">${x.sig[0]}</span></div><div class="kv"><span>Version</span><b>${esc(x.c.version)}</b><span>Aktueller Preis</span><b>${fmt(x.s.cur)}</b><span>Menge</span><b>${qy} Stk.</b><span>Einkauf bis</span><b>${fmt(x.lim)}</b><span>Verkaufsziel</span><b>${fmt(x.t)}</b><span>Gewinn/Stk. netto</span><b class="ok">${fmt(x.p)} (${(x.roi*100).toFixed(1)} %)</b><span>Kaufen</span><b>${fd(x.buyAt)}</b><span>Verkaufen ab</span><b>${fd(x.sellAt)}</b><span>Datenbasis</span><b>${x.s.n} Punkte / ${x.s.span.toFixed(1)} Tg.</b></div></div>`;
+  });
+  $('rec').innerHTML=h?`<div class="kv" style="margin:0 0 10px"><span>Investiert</span><b>${fmt(tot)}</b><span>Übrig</span><b>${fmt(rem)}</b><span>Erw. Gewinn</span><b class="ok">${fmt(prof)}</b></div>`+h:'<span class="note">Aktuell keine Karte, die dein Budget, deine Haltedauer und deinen Mindestgewinn erfüllt. Ab drei Messpunkten pro Karte werden Empfehlungen berechnet.</span>';
+}
+function win(){
+  const n=new Date(),m=(n.getDay()+6)%7*1440+n.getHours()*60+n.getMinutes(),o=(a,b)=>m>=a&&m<b;
+  const t=x=>x?'<span class="ok">● jetzt offen</span>':'<span class="wa">○ geschlossen</span>';
+  $('bs').innerHTML=t(o(4*1440+1080,6*1440+1200));$('ss').innerHTML=t(o(1080,2*1440+1320));
+}
+async function load(){
+  try{
+    const got=await Promise.all(['prices.json','prices-low.json'].map(f=>fetch(f+'?'+Math.floor(Date.now()/60000),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)));
+    const ok=got.filter(Boolean);
+    if(!ok.length)throw new Error('leer');
+    D={updated:ok.map(x=>x.updated).filter(Boolean).sort().pop()||null,cards:Object.assign({},...ok.map(x=>x.cards||{}))};
+    render();
+  }catch(e){$('stand').textContent='Preise konnten nicht geladen werden.'}
+}
+['coins','share','roi','hold'].forEach(i=>$(i).oninput=render);
+const sp=$('splash');setTimeout(()=>sp.classList.add('out'),2600);sp.onclick=()=>sp.classList.add('out');
+win();setInterval(win,60000);load();setInterval(load,900000);
+</script>
+</body>
+</html>

@@ -1,9 +1,11 @@
 {
-  "ratings": [86, 87, 88, 89, 90, 91],
-  "pages": 6,
-  "mode": "auto",
+  "ratings": [99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83],
+  "slowRatings": [82, 81, 80, 79, 78, 77, 76, 75],
+  "slowEveryHours": 3,
+  "pages": 60,
+  "mode": "direct",
   "delayMs": 4000,
-  "maxPagesTotal": 60,
-  "maxMinutes": 40,
-  "apifyPagesPerRating": 1
+  "concurrency": 3,
+  "maxPagesTotal": 500,
+  "maxMinutes": 50
 }

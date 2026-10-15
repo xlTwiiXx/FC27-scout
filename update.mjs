@@ -1,34 +1,45 @@
-// Holt Preise von FUT.GG (Listen nach Rating, sortiert nach Preis).
-// mode "auto":  zuerst direkt per Browser auf GitHub (kostenlos); wird das blockiert,
-//               Ersatz ueber Apify (nur wenige Seiten, damit die Kosten klein bleiben).
-// mode "direct": nur direkt.   mode "apify": nur Apify.
+// Holt Preise ALLER Karten ab Rating 75 von FUT.GG (Listen nach Rating, sortiert nach Preis).
+// Schnelle Ratings (z. B. 83-99) bei jedem Lauf -> prices.json
+// Langsame Ratings (z. B. 75-82) nur alle N Stunden -> prices-low.json
+// mode "direct": nur kostenlos per Browser auf GitHub. "auto": bei Sperre Ersatz ueber Apify (kostet!).
 import fs from 'node:fs';
 
+const range = (a, b) => Array.from({ length: Math.abs(b - a) + 1 }, (_, i) => (a > b ? a - i : a + i));
 const cfg = {
-  ratings: [86, 87, 88, 89, 90, 91],
-  pages: 6,                // max. Seiten je Rating im Direktmodus
-  mode: 'auto',
-  delayMs: 4000,           // Pause zwischen Seiten (schont FUT.GG)
-  maxPagesTotal: 60,       // Obergrenze je Lauf
-  maxMinutes: 40,          // Zeitlimit je Lauf
-  apifyPagesPerRating: 1,  // Ersatzweg: Seiten je Rating (Kosten!)
+  ratings: range(99, 83),
+  slowRatings: range(82, 75),
+  slowEveryHours: 3,
+  pages: 60,               // max. Seiten je Rating (Job stoppt selbst am Listenende)
+  mode: 'direct',
+  delayMs: 4000,           // Pause je Seite und Worker
+  concurrency: 3,          // gleichzeitige Browser-Seiten
+  maxPagesTotal: 500,
+  maxMinutes: 50,
+  apifyPagesPerRating: 1,
   ...JSON.parse(fs.readFileSync('config.json', 'utf8')),
 };
 const TOKEN = process.env.APIFY_TOKEN || '';
+const FORCE_ALL = process.env.FORCE_ALL === '1';
 const startedAt = Date.now();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-let db = { updated: null, cards: {} };
-try { db = JSON.parse(fs.readFileSync('prices.json', 'utf8')); } catch {}
-db.cards = db.cards || {};
+const SETS = {
+  fast: { file: 'prices.json', fullDays: 3, thinHours: 3, maxDays: 14 },
+  slow: { file: 'prices-low.json', fullDays: 2, thinHours: 3, maxDays: 7 },
+};
+const dbs = {};
+for (const [k, s] of Object.entries(SETS)) {
+  let d = { updated: null, cards: {} };
+  try { d = JSON.parse(fs.readFileSync(s.file, 'utf8')); } catch {}
+  d.cards = d.cards || {};
+  dbs[k] = d;
+}
 
-// "10.8K" -> 10800, "1.2M" -> 1200000, "850" -> 850, "EXTINCT" -> null
 const num = (s) => {
   const m = String(s).replace(/,/g, '').match(/^([\d.]+)([KM]?)$/);
   if (!m) return null;
   return Math.round(parseFloat(m[1]) * (m[2] === 'M' ? 1e6 : m[2] === 'K' ? 1e3 : 1));
 };
-
 const listUrl = (r, p) =>
   `https://www.fut.gg/players/?overall__gte=${r}&overall__lte=${r}&market_players=true&sorts=current_price` +
   (p > 1 ? `&page=${p}` : '');
@@ -45,8 +56,7 @@ async function openBrowser() {
   return { browser, ctx };
 }
 
-// Zeilen eines Kartenblocks -> {pos, gg, price}
-export function parseLines(lines) {
+function parseLines(lines) {
   const pos = lines.find((l) => /^[A-Z]{2,3}$/.test(l));
   const gi = lines.findIndex((l) => /^\d{2}\.\d$/.test(l));
   if (gi < 0) return null;
@@ -54,7 +64,7 @@ export function parseLines(lines) {
   if (!cand.length) return null;
   const price = num(cand[cand.length - 1]);
   if (!price) return null;
-  return { pos: pos || '?', gg: parseFloat(lines[gi]), price };
+  return { pos: pos || '?', price };
 }
 
 async function directPage(ctx, url) {
@@ -91,9 +101,8 @@ async function directPage(ctx, url) {
   }
 }
 
-// ---------- Ersatzweg: Apify ----------
+// ---------- Ersatzweg: Apify (nur mode "auto") ----------
 const RE = /\[\s*!\[(.+?) - (\d{2}) - (.+?)\]\([^)]*\)\s*([A-Z]{2,3})\s*([\d.]+)\s*!\[Coin\]\([^)]*\)\s*([\d.,]+[KM]?|EXTINCT)[\s\S]*?\]\((https:\/\/www\.fut\.gg\/players\/[^)\s]+\/27-(\d+)\/)\)/g;
-
 async function apifyPage(url) {
   if (!TOKEN) { console.error('APIFY_TOKEN fehlt, Ersatzweg nicht moeglich.'); return []; }
   for (let i = 0; i < 2; i++) {
@@ -127,6 +136,14 @@ async function apifyPage(url) {
 
 // ---------- Hauptablauf ----------
 const t = Date.now();
+const hour = new Date().getUTCHours();
+const runSlow = cfg.slowRatings.length > 0 && (FORCE_ALL || hour % (cfg.slowEveryHours || 3) === 0);
+const jobs = [
+  ...cfg.ratings.map((r) => ({ r, set: 'fast' })),
+  ...(runSlow ? cfg.slowRatings.map((r) => ({ r, set: 'slow' })) : []),
+];
+console.log(`Start: ${jobs.length} Ratings (${runSlow ? 'inkl.' : 'ohne'} langsame Gruppe), Modus ${cfg.mode}, ${cfg.concurrency} parallel.`);
+
 let direct = cfg.mode !== 'apify';
 let b = null;
 if (direct) {
@@ -135,47 +152,45 @@ if (direct) {
 }
 if (!direct && cfg.mode === 'direct') { console.error('Direktmodus nicht moeglich.'); process.exit(1); }
 
-let pages = 0, total = 0, nDirect = 0, nApify = 0;
+let pages = 0, total = 0, nDirect = 0, nApify = 0, blocked = false;
+const touched = new Set();
+const stop = () => blocked || pages >= cfg.maxPagesTotal || (Date.now() - startedAt) / 60000 > cfg.maxMinutes;
 
-outer:
-for (const r of cfg.ratings) {
+async function runJob(job) {
+  const db = dbs[job.set];
   const seen = new Set();
   for (let p = 1; p <= cfg.pages; p++) {
-    if (pages >= cfg.maxPagesTotal || (Date.now() - startedAt) / 60000 > cfg.maxMinutes) {
-      console.log('Limit erreicht, Lauf wird beendet.');
-      break outer;
-    }
+    if (stop()) { console.log(`Rating ${job.r}: Limit erreicht, Rest folgt im naechsten Lauf.`); return; }
     let cards = [];
 
     if (direct) {
-      let res = await directPage(b.ctx, listUrl(r, p)); pages++;
+      let res = await directPage(b.ctx, listUrl(job.r, p)); pages++;
       if (!res.cards.length && p === 1) {
-        console.log(`Rating ${r}: leer, zweiter Versuch ...`);
         await sleep(6000);
-        res = await directPage(b.ctx, listUrl(r, p)); pages++;
+        res = await directPage(b.ctx, listUrl(job.r, p)); pages++;
       }
       cards = res.cards;
       if (!cards.length && p === 1) {
-        console.error(`Direkt blockiert oder leer (Rating ${r}): ${res.error || res.title || '-'}`);
-        if (cfg.mode === 'direct') break outer;
+        console.error(`Rating ${job.r}: leer oder blockiert (${res.error || res.title || '-'})`);
+        if (cfg.mode === 'direct') { blocked = true; return; }
         direct = false;
         console.log('Wechsle zu Apify (Ersatzweg).');
       } else if (!cards.length) {
-        break; // Ende der Liste
+        return; // Ende der Liste
       } else {
         nDirect++;
       }
     }
 
     if (!direct) {
-      if (p > cfg.apifyPagesPerRating) break;
-      cards = await apifyPage(listUrl(r, p)); pages++;
-      if (cards.length < 5) { console.error(`Apify lieferte zu wenig (Rating ${r}).`); break; }
+      if (p > cfg.apifyPagesPerRating) return;
+      cards = await apifyPage(listUrl(job.r, p)); pages++;
+      if (cards.length < 5) { console.error(`Apify lieferte zu wenig (Rating ${job.r}).`); return; }
       nApify++;
     }
 
     const fresh = cards.filter((c) => !seen.has(c.id));
-    if (!fresh.length) break;
+    if (!fresh.length) return;
     for (const c of fresh) {
       seen.add(c.id);
       const e = db.cards[c.id] || { h: [] };
@@ -183,29 +198,38 @@ for (const r of cfg.ratings) {
       e.h.push([t, c.price]);
       db.cards[c.id] = e;
     }
+    touched.add(job.set);
     total += fresh.length;
-    console.log(`Rating ${r} Seite ${p}: ${fresh.length} Karten (${direct ? 'direkt' : 'Apify'})`);
-    if (direct) await sleep(cfg.delayMs + Math.random() * 2000);
+    console.log(`Rating ${job.r} Seite ${p}: ${fresh.length} Karten`);
+    await sleep(cfg.delayMs + Math.random() * 2000);
   }
 }
 
+const queue = [...jobs];
+await Promise.all(
+  Array.from({ length: Math.max(1, cfg.concurrency) }, async () => {
+    while (queue.length && !stop()) await runJob(queue.shift());
+  })
+);
+
 if (b) await b.browser.close();
-if (total === 0) { console.error('Keine Daten erhalten, prices.json bleibt unveraendert.'); process.exit(1); }
+if (total === 0) { console.error('Keine Daten erhalten, Dateien bleiben unveraendert.'); process.exit(1); }
 
-// Historie aufraeumen: letzte 3 Tage voll, aelter nur alle 3 Stunden, max. 14 Tage
-const cutoff = t - 14 * 864e5;
-for (const [id, e] of Object.entries(db.cards)) {
-  let last = 0;
-  e.h = e.h.filter((x) => {
-    if (x[0] < cutoff) return false;
-    if (x[0] >= t - 3 * 864e5) { last = x[0]; return true; }
-    if (x[0] - last >= 3 * 36e5) { last = x[0]; return true; }
-    return false;
-  });
-  if (!e.h.length) delete db.cards[id];
+for (const set of touched) {
+  const s = SETS[set], db = dbs[set];
+  const cutoff = t - s.maxDays * 864e5;
+  for (const [id, e] of Object.entries(db.cards)) {
+    let last = 0;
+    e.h = e.h.filter((x) => {
+      if (x[0] < cutoff) return false;
+      if (x[0] >= t - s.fullDays * 864e5) { last = x[0]; return true; }
+      if (x[0] - last >= s.thinHours * 36e5) { last = x[0]; return true; }
+      return false;
+    });
+    if (!e.h.length) delete db.cards[id];
+  }
+  db.updated = new Date(t).toISOString();
+  db.meta = { cards: Object.keys(db.cards).length, mode: cfg.mode };
+  fs.writeFileSync(s.file, JSON.stringify(db));
 }
-
-db.updated = new Date(t).toISOString();
-db.meta = { directPages: nDirect, apifyPages: nApify, cards: total, mode: cfg.mode };
-fs.writeFileSync('prices.json', JSON.stringify(db));
-console.log(`Fertig: ${total} Preise, ${nDirect} Seiten direkt, ${nApify} Seiten ueber Apify.`);
+console.log(`Fertig: ${total} Preise, ${pages} Seiten (${nDirect} direkt, ${nApify} Apify), ${Math.round((Date.now() - startedAt) / 60000)} Min.`);
