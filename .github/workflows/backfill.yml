@@ -1,0 +1,36 @@
+name: backfill-history
+
+on:
+  schedule:
+    - cron: "30 * * * *"     # jede Stunde zur halben Stunde, arbeitet einen Teil der Karten ab
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: scout-data
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Browser installieren
+        run: |
+          npm install --no-save playwright@1.48.2
+          npx playwright install --with-deps chromium
+      - name: Historie nachladen
+        run: node backfill.mjs
+      - name: Speichern
+        if: always()
+        run: |
+          git config user.name "scout-bot"
+          git config user.email "scout-bot@users.noreply.github.com"
+          git add prices*.json
+          git diff --cached --quiet || (git commit -m "Historie nachgeladen" && git pull --rebase -q && git push)

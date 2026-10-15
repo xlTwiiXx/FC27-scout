@@ -3,13 +3,13 @@ name: update-prices
 on:
   schedule:
     - cron: "0 * * * *"      # jede Stunde (UTC)
-  workflow_dispatch:         # Knopf zum manuellen Starten (laedt dann ALLE Ratings)
+  workflow_dispatch:         # manueller Start (laedt dann ALLE Ratings)
 
 permissions:
   contents: write
 
 concurrency:
-  group: update-prices
+  group: scout-data          # gemeinsam mit backfill: nie gleichzeitig
   cancel-in-progress: false
 
 jobs:
@@ -28,11 +28,15 @@ jobs:
       - name: Preise holen
         run: node update.mjs
         env:
-          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
           FORCE_ALL: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
+      - name: Ereignisse holen (SBCs, EA-Meldungen)
+        if: always()
+        run: node events.mjs
+        continue-on-error: true
       - name: Speichern
+        if: always()
         run: |
           git config user.name "scout-bot"
           git config user.email "scout-bot@users.noreply.github.com"
-          git add prices*.json
-          git diff --cached --quiet || (git commit -m "Preise aktualisiert" && git pull --rebase -q && git push)
+          git add prices*.json events.json
+          git diff --cached --quiet || (git commit -m "Daten aktualisiert" && git pull --rebase -q && git push)
