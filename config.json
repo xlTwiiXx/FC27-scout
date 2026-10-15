@@ -1,6 +1,33 @@
 {
-  "ratings": [99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83],
-  "slowRatings": [82, 81, 80, 79, 78, 77, 76, 75],
+  "ratings": [
+    99,
+    98,
+    97,
+    96,
+    95,
+    94,
+    93,
+    92,
+    91,
+    90,
+    89,
+    88,
+    87,
+    86,
+    85,
+    84,
+    83
+  ],
+  "slowRatings": [
+    82,
+    81,
+    80,
+    79,
+    78,
+    77,
+    76,
+    75
+  ],
   "slowEveryHours": 1,
   "pages": 60,
   "delayMs": 4000,
@@ -11,8 +38,21 @@
   "backfillDelayMs": 3000,
   "backfillMaxMinutes": 40,
   "backfillMinRating": 75,
-  "leakAccounts": ["FUTPOLICE", "FutSheriff", "DetectiveFUT", "FUTxGG"],
+  "leakAccounts": [
+    "FUTPOLICE",
+    "FutSheriff",
+    "DetectiveFUT",
+    "FUTxGG"
+  ],
   "leakKeepDays": 21,
   "leakMaxPerAccount": 80,
-  "leakDelayMs": 4000
+  "leakDelayMs": 4000,
+  "newsQueries": [
+    "FC 27 leak",
+    "FC 27 SBC leak",
+    "FC 27 promo leak",
+    "FC 27 TOTW",
+    "FC 27 Ultimate Team Hero Icon"
+  ],
+  "newsMax": 25
 }

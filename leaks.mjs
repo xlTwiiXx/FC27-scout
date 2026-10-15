@@ -8,6 +8,8 @@ const cfg = {
   leakKeepDays: 21,
   leakMaxPerAccount: 80,
   leakDelayMs: 4000,
+  newsQueries: ['FC 27 leak', 'FC 27 SBC leak', 'FC 27 promo leak', 'FC 27 TOTW', 'FC 27 Ultimate Team Hero Icon'],
+  newsMax: 25,
   ...JSON.parse(fs.readFileSync('config.json', 'utf8')),
 };
 const now = Date.now();
@@ -92,6 +94,50 @@ for (const handle of cfg.leakAccounts) {
   await sleep(cfg.leakDelayMs + Math.random() * 1500);
 }
 await browser.close();
+
+// ---------- Medien: Google News (oeffentlicher RSS-Feed, mit Zeitstempel) ----------
+const decode = (x) => String(x || '').replace(/<!\[CDATA\[|\]\]>/g, '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim();
+export function parseRss(xml) {
+  const items = [];
+  const re = /<item>([\s\S]*?)<\/item>/g;
+  let m;
+  while ((m = re.exec(xml))) {
+    const g = (tag) => { const x = m[1].match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`)); return x ? decode(x[1]) : ''; };
+    items.push({ title: g('title'), link: g('link'), pub: g('pubDate'), source: g('source') });
+  }
+  return items;
+}
+const hash = (str) => { let h = 5381; for (const c of str) h = ((h << 5) + h + c.charCodeAt(0)) | 0; return (h >>> 0).toString(36); };
+const normT = (x) => x.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+{
+  const info = { ok: false, n: 0, error: '' };
+  accounts['Medien'] = info;
+  const got = new Map();
+  for (const q of cfg.newsQueries || []) {
+    try {
+      const url = `https://news.google.com/rss/search?q=${encodeURIComponent(q + ' when:3d')}&hl=en-US&gl=US&ceid=US:en`;
+      const r = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36', 'accept-language': 'en-US,en;q=0.9' }, signal: AbortSignal.timeout(20000) });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      for (const it of parseRss(await r.text())) {
+        const t = Date.parse(it.pub);
+        if (!(t > 0) || !it.title) continue;
+        let title = it.title;
+        if (it.source && title.endsWith(' - ' + it.source)) title = title.slice(0, -(it.source.length + 3));
+        if (!/fc ?27|ea sports fc|ultimate team|\bfut\b|totw|totS|toty|potm/i.test(title)) continue;
+        const key = normT(title);
+        if (got.has(key) && got.get(key).t >= t) continue;
+        got.set(key, { id: 'n' + hash(key), kind: 'news', handle: it.source || 'Medien', name: it.source || 'Medien', text: title.slice(0, 400), t, url: it.link,
+          tags: TAGS.filter(([, re]) => re.test(title)).map(([n]) => n), pred: PRED.test(title) });
+      }
+    } catch (e) { info.error = String(e.message).split('\n')[0]; }
+    await sleep(800);
+  }
+  const list = [...got.values()].sort((a, b) => b.t - a.t).slice(0, cfg.newsMax || 25);
+  info.ok = list.length > 0; info.n = list.length;
+  if (!list.length && !info.error) info.error = 'keine Treffer';
+  fresh.push(...list);
+  console.log(`Medien (Google News): ${info.ok ? info.n + ' Artikel' : 'FEHLER - ' + info.error}`);
+}
 
 // Mit frueheren Beitraegen zusammenfuehren, damit auch Aelteres erhalten bleibt
 const byId = new Map();
