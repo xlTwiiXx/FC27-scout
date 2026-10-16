@@ -6,6 +6,7 @@ import fs from 'node:fs';
 const cfg = { metaPerRun: 60, metaMaxMinutes: 4, metaDelayMs: 1200, ...JSON.parse(fs.readFileSync('config.json', 'utf8')) };
 const DIR = process.env.DATA_DIR || '.';
 const startedAt = Date.now();
+const maxMin = process.env.META_MAX_SECONDS ? Number(process.env.META_MAX_SECONDS) / 60 : cfg.metaMaxMinutes;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let catalog = { cards: {} }, meta = { players: {} };
 try { catalog = JSON.parse(fs.readFileSync(`${DIR}/catalog.json`, 'utf8')); } catch {}
@@ -21,7 +22,7 @@ for (const c of Object.values(catalog.cards)) {
   w.rating = Math.max(w.rating, c.rating);
   wanted.set(m[1], w);
 }
-const todo = [...wanted.entries()].filter(([id]) => !meta.players[id] || meta.players[id].retry < 3 && !meta.players[id].nat).sort((a, b) => b[1].rating - a[1].rating).slice(0, cfg.metaPerRun);
+const todo = [...wanted.entries()].filter(([id]) => { const r = meta.players[id]; return !r || (r.v !== 2 && (r.retry || 0) < 3) || (!r.nat && (r.retry || 0) < 3); }).sort((a, b) => b[1].rating - a[1].rating).slice(0, cfg.metaPerRun);
 console.log(`Meta: ${wanted.size} Spieler im Katalog, ${Object.keys(meta.players).length} mit Daten, ${todo.length} in diesem Lauf.`);
 if (!todo.length) { console.log('Nichts zu tun.'); process.exit(0); }
 
@@ -86,7 +87,8 @@ async function fromEA(id, slug) {
       const d = await ea.evaluate(() => {
         const t = document.body.innerText, g = (re) => { const m = t.match(re); return m ? m[1].trim() : ''; };
         const idOf = (sel) => { const a = document.querySelector(sel); const m = a && a.href.match(/\/(\d+)\/?$/); return m ? m[1] : null; };
-        return { pos: g(/\nPosition\n+([A-Z]{2,3})\b/), nation: g(/\nNation\n+([^\n]+)/), league: g(/\nLeague\n+([^\n]+)/), team: g(/\nTeam\n+([^\n]+)/), nid: idOf('a[href*="/nations-ratings/"]'), cid: idOf('a[href*="/teams-ratings/"]') };
+        const am = t.match(/\nAlt Positions\n+((?:[A-Z]{2,3}\n+)+)/);
+        return { pos: g(/\nPosition\n+([A-Z]{2,3})\b/), alt: am ? am[1].split(/\n+/).filter((x) => /^[A-Z]{2,3}$/.test(x)) : [], nation: g(/\nNation\n+([^\n]+)/), league: g(/\nLeague\n+([^\n]+)/), team: g(/\nTeam\n+([^\n]+)/), nid: idOf('a[href*="/nations-ratings/"]'), cid: idOf('a[href*="/teams-ratings/"]') };
       });
       if (d.nation || d.team) return d;
     } catch {}
@@ -96,18 +98,19 @@ async function fromEA(id, slug) {
 
 let ok = 0, n = 0, dbg = 0;
 for (const [id, w] of todo) {
-  if ((Date.now() - startedAt) / 60000 > cfg.metaMaxMinutes) { console.log('Zeitlimit erreicht.'); break; }
+  if ((Date.now() - startedAt) / 60000 > maxMin) { console.log('Zeitlimit erreicht.'); break; }
   const g = await fromGG(id);
   const e = await fromEA(id, w.slug);
   const rec = meta.players[id] || { retry: 0 };
   const d = g.data || {};
-  const nat = (d.nat && (d.nat.id != null || d.nat.name)) ? d.nat : (e ? { id: e.nid, name: e.nation } : null);
-  const lg = (d.lg && (d.lg.id != null || d.lg.name)) ? d.lg : (e && e.league ? { id: e.league.toLowerCase(), name: e.league } : null);
-  const club = (d.club && (d.club.id != null || d.club.name)) ? d.club : (e ? { id: e.cid, name: e.team } : null);
-  if (d.nat && !d.nat.name && e && e.nation) nat.name = e.nation;
-  if (d.club && !d.club.name && e && e.team) club.name = e.team;
-  if (d.lg && !d.lg.name && e && e.league) lg.name = e.league;
-  Object.assign(rec, { nat, lg, club, pos: d.pos || (e && e.pos) || rec.pos || null, alt: d.alt && d.alt.length ? d.alt : rec.alt || [], src: g.data ? (e ? 'gg+ea' : 'gg') : e ? 'ea' : null });
+  const pick = (ea, gg) => (ea && (ea.id != null || ea.name) ? ea : gg && (gg.id != null || gg.name) ? gg : null);
+  const eaNat = e && e.nation ? { id: e.nid, name: e.nation } : null;
+  const eaLg = e && e.league ? { id: e.league.toLowerCase(), name: e.league } : null;
+  const eaClub = e && e.team ? { id: e.cid, name: e.team } : null;
+  const nat = pick(eaNat, d.nat), lg = pick(eaLg, d.lg), club = pick(eaClub, d.club);
+  // Alternativpositionen: die EA-Seite ist massgeblich, wenn sie gefunden wurde (auch wenn dort keine stehen)
+  const alt = e ? e.alt : (d.alt && d.alt.length ? d.alt : rec.alt || []);
+  Object.assign(rec, { nat, lg, club, pos: (e && e.pos) || d.pos || rec.pos || null, alt, v: 2, src: e ? (g.data ? 'ea+gg' : 'ea') : g.data ? 'gg' : null });
   if (d.woman !== undefined) rec.woman = !!d.woman;
   if (!nat) rec.retry = (rec.retry || 0) + 1;
   meta.players[id] = rec;

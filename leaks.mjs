@@ -6,7 +6,7 @@ import fs from 'node:fs';
 const cfg = {
   leakAccounts: ['Futdonk', 'FGZNews', 'FIFA22_INFO', 'WeaverFUT', 'FutSheriff', 'FutPoliceLeaks', 'Rickth21', 'fifa_romania', 'AsyFutTrader'],
   leakKeepDays: 14,
-  leakMaxPerAccount: 80,
+  leakMaxPerAccount: 150,
   leakDelayMs: 4000,
   ...JSON.parse(fs.readFileSync('config.json', 'utf8')),
 };
@@ -40,18 +40,30 @@ export function collectTweets(node, out = []) {
   }
   return out;
 }
+// Alles, was nach EA FC aussieht: Begriffe aus dem Spiel (die Konten sind FC-Konten, deshalb bewusst breit)
+const FC_WORDS = /\b(fc ?2[4-7]|ea ?fc|eafc|fifa|fut|ultimate team|sbcs?|totw|toty|tots|potm|promos?|packs?|icons?|heroe?s?|evos?|evolutions?|objectives?|season pass|tokens?|squads?|ratings?|leaks?|leaked|predict\w*|market|invest\w*|coins?|futties|rivals|champions|wildcard|showdown|fantasy|future stars|destined|glory|upgrade|rewards?|player pick|ones to watch|rttf|flashback|cards?|chemistry|playstyles?|stats)\b/i;
 export function toLeak(raw, fallbackHandle) {
-  const text = cleanText(raw.full_text || raw.text);
-  if (!text || /^RT @/.test(text) || raw.in_reply_to_status_id_str || raw.retweeted_status) return null;
+  const handle = (raw.user && raw.user.screen_name) || fallbackHandle;
+  const rtRaw = raw.retweeted_status || null;
+  const src = rtRaw || raw;
+  let text = cleanText(src.full_text || src.text || raw.full_text || raw.text);
+  const isRT = !!rtRaw || /^RT @/.test(text);
+  const rtFrom = (rtRaw && rtRaw.user && rtRaw.user.screen_name) || ((text.match(/^RT @(\w+)/) || [])[1]) || '';
+  if (/^RT @\w+:?\s*/.test(text)) text = text.replace(/^RT @\w+:?\s*/, '');
+  // Antworten an andere Konten sind Gespraeche, keine Leaks. Eigene Antworten (Threads) bleiben drin.
+  const replyTo = raw.in_reply_to_screen_name;
+  const selfReply = !!replyTo && String(replyTo).toLowerCase() === String(handle).toLowerCase();
+  if (replyTo && !selfReply) return null;
   const t = Date.parse(raw.created_at);
   if (!(t > 0)) return null;
-  const handle = (raw.user && raw.user.screen_name) || fallbackHandle;
   const tags = TAGS.filter(([, re]) => re.test(text)).map(([n]) => n);
-  const mediaRaw = (raw.extended_entities && raw.extended_entities.media) || (raw.entities && raw.entities.media) || raw.mediaDetails || [];
-  const media = [...mediaRaw.map((m) => m.media_url_https || m.media_url), ...((raw.photos || []).map((p) => p.url))].filter(Boolean).slice(0, 4);
+  const mediaRaw = (src.extended_entities && src.extended_entities.media) || (src.entities && src.entities.media) || src.mediaDetails || [];
+  const media = [...mediaRaw.map((m) => m.media_url_https || m.media_url), ...((src.photos || []).map((p) => p.url))].filter(Boolean).slice(0, 4);
+  if (!text && !media.length) return null;
+  if (!selfReply && !media.length && !tags.length && !FC_WORDS.test(text)) return null; // nicht EA FC bezogen (Teile eines eigenen Threads bleiben immer drin)
   const avatar = raw.user && raw.user.profile_image_url_https ? raw.user.profile_image_url_https.replace('_normal.', '_200x200.') : '';
   return { id: raw.id_str, handle, name: (raw.user && raw.user.name) || handle, avatar, media, text: text.slice(0, 600), t,
-    url: `https://x.com/${handle}/status/${raw.id_str}`, tags, pred: PRED.test(text) };
+    url: `https://x.com/${handle}/status/${raw.id_str}`, tags, pred: PRED.test(text), ...(isRT ? { rt: rtFrom || '?' } : {}) };
 }
 
 const { chromium } = await import('playwright');

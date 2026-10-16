@@ -132,12 +132,12 @@ input:focus{outline:2px solid var(--ac);outline-offset:0}
 .nav button{font-size:10.5px}
 @media (min-width:820px){.nav button{font-size:14px}}
 .cr{cursor:pointer}
-.sheet{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.sheet{position:fixed;left:0;right:0;top:0;height:100%;z-index:60;display:flex;align-items:flex-end;justify-content:center}
 .sheet[hidden]{display:none}
 .sh-bg{position:absolute;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-.sh-body{position:relative;width:100%;max-width:720px;max-height:92vh;overflow:auto;background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--bd);border-radius:24px 24px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -20px 60px rgba(0,0,0,.5)}
+.sh-body{position:relative;width:100%;max-width:720px;max-height:94%;overflow:auto;background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--bd);border-radius:24px 24px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -20px 60px rgba(0,0,0,.5)}
 @media (min-width:820px){.sheet{align-items:center}.sh-body{border-radius:24px}}
-.sh-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.sh-top{display:flex;align-items:center;gap:12px;position:sticky;top:-16px;z-index:5;margin:-16px -16px 12px;padding:16px 16px 10px;background:var(--card)}
 .badge.sm{width:46px;padding:6px 0 8px;border-radius:10px 10px 20px 20px}.badge.sm b{font-size:19px}
 .shn{flex:1;min-width:0}.shn b{display:block;font-size:17px}.shn span{font-size:12px;font-weight:700}
 .shp{text-align:right}.shp b{display:block;font-size:20px}.shp span{font-size:12px;font-weight:700}
@@ -178,6 +178,27 @@ background:repeating-linear-gradient(180deg,rgba(255,255,255,.035) 0 8.33%,trans
 .pr2 .cn b{font-size:14.5px}.pr2 .cn span{display:block;font-size:11.5px;color:var(--mu)}
 .tl{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--bd);font-size:13px}.tl:first-child{border-top:0}
 .tl .tx2{flex:1;min-width:0}.tl b{font-size:14.5px}.tl .gd{color:var(--ok);font-weight:700}.tl .wt{color:var(--wa);font-weight:700}
+
+.sheet.full .sh-body{height:100%;max-height:none;border-radius:0;border:0;padding:calc(12px + env(safe-area-inset-top,0px)) 14px 0;display:flex;flex-direction:column;overflow:hidden;max-width:none}
+.sheet.full .sh-top{position:static;margin:0 0 8px;padding:0;background:none}
+.sheet.full #pL{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));overscroll-behavior:contain}
+@media (min-width:820px){.sheet.full .sh-body{max-width:720px;border-radius:24px;height:92%;margin-top:4%}.sheet.full{align-items:flex-start}}
+.dlg{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:24px}.dlg[hidden]{display:none}
+.dlg-bg{position:absolute;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.dlg-box{position:relative;width:100%;max-width:360px;background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--bd);border-radius:22px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.dlg-box b{font-size:17px}.dlg-btn{display:flex;gap:10px;margin-top:16px}
+.dlg-btn button{flex:1;border:0;border-radius:12px;padding:12px;font:inherit;font-weight:800;cursor:pointer;color:var(--on);background:linear-gradient(135deg,var(--ac),var(--ac2))}.dlg-btn .gh{background:rgba(255,255,255,.08);color:var(--tx)}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:95;background:rgba(20,16,40,.96);border:1px solid var(--bd);border-radius:14px;padding:10px 16px;font-weight:700;font-size:13.5px;transition:.25s;max-width:86%;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.fg{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mu);font-weight:800;margin:14px 0 6px}
+.fo{display:inline-block;margin:0 6px 8px 0;padding:10px 14px;border-radius:12px;border:1px solid var(--bd);background:rgba(0,0,0,.25);color:var(--tx);font:inherit;font-weight:700;cursor:pointer}
+.fo.on{border-color:var(--ac);background:linear-gradient(160deg,color-mix(in srgb,var(--ac) 22%,transparent),rgba(0,0,0,.2))}
+.slot.filled{touch-action:none}
+.slot .rm{position:absolute;right:-4px;top:-12px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(10,8,20,.85);color:#fff;font-size:15px;line-height:24px;padding:0;z-index:4;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.slot .chm{top:auto;bottom:16px}
+.slot.tok .ca,.slot.tok .em{outline:2px solid var(--ok);outline-offset:2px;border-radius:10px}
+.slot.tno{opacity:.35}
+.ghost{position:fixed;z-index:99;width:64px;pointer-events:none;transform:translate(-50%,-60%) rotate(-4deg);filter:drop-shadow(0 10px 18px rgba(0,0,0,.6))}
 </style>
 </head>
 <body>
@@ -223,9 +244,10 @@ background:repeating-linear-gradient(180deg,rgba(255,255,255,.035) 0 8.33%,trans
 </div>
 
 <div class="tab" id="t-event">
-  <section class="panel"><h2 id="evTh">TOTW</h2><p class="note" id="evTs" style="margin:0 0 6px"></p><div id="evTl"></div></section>
-  <section class="panel"><h2 id="evEh">Event-Team</h2><p class="note" id="evEs" style="margin:0 0 6px"></p><div id="evEl"></div></section>
-  <p class="note">Quelle: FUT.GG (Squads). Ein neues TOTW erscheint mittwochs ca. 19 Uhr, das Event-Team freitags ca. 19 Uhr. Die App holt es danach innerhalb von etwa 15 Minuten. Billigste Karte zuerst.</p>
+  <div class="seg" id="evSeg" style="margin-bottom:14px"><button data-e="event" class="on">Event</button><button data-e="totw">TOTW</button></div>
+  <section class="panel" id="evPE"><h2 id="evEh">Event-Team</h2><p class="note" id="evEs" style="margin:0 0 6px"></p><div id="evEl"></div></section>
+  <section class="panel" id="evPT" hidden><h2 id="evTh">TOTW</h2><p class="note" id="evTs" style="margin:0 0 6px"></p><div id="evTl"></div></section>
+  <p class="note">Quelle: FUT.GG (Squads), nur das jeweils aktuellste Team. Ein neues TOTW erscheint mittwochs ca. 19 Uhr, das Event-Team freitags ca. 19 Uhr. Die App holt es danach innerhalb von etwa 15 Minuten. Billigste Karte zuerst.</p>
 </div>
 
 <div class="tab" id="t-leaks">
@@ -241,7 +263,7 @@ background:repeating-linear-gradient(180deg,rgba(255,255,255,.035) 0 8.33%,trans
   <section class="panel">
     <h2>Teambuilder</h2>
     <div class="g2">
-      <div><label>Formation</label><select id="tbF" class="sel"></select></div>
+      <div><label>Formation</label><button class="rbtn" id="tbFb" type="button"><span id="tbFt">4-3-3</span><span>▾</span></button></div>
       <div><label>&nbsp;</label><button class="rbtn" id="tbClr" type="button"><span>Team leeren</span><span>✕</span></button></div>
     </div>
     <label class="sw"><input type="checkbox" id="tbChk" checked> Positionen prüfen (Karte muss auf ihrer Position oder Alternativposition stehen)</label>
@@ -254,16 +276,24 @@ background:repeating-linear-gradient(180deg,rgba(255,255,255,.035) 0 8.33%,trans
 
 <p class="note">Keine Finanzberatung. Alle Zahlen beruhen auf dem günstigsten Sofortkauf-Preis von FUT.GG, nicht auf tatsächlich erzielten Verkäufen. Prüfe den Preis im Spiel vor dem Kauf. Bei vielen Karten auf einmal bewegst du den Markt selbst.</p>
 </main>
-<div class="sheet" id="pick" hidden>
+<div class="sheet full" id="pick" hidden>
   <div class="sh-bg" data-close></div>
   <div class="sh-body">
     <div class="sh-top"><div class="shn"><b id="pT">Spieler wählen</b><span class="note" id="pS"></span></div><button class="xb" data-close aria-label="Schließen">✕</button></div>
-    <input id="pQ" type="text" class="sq" placeholder="Name suchen …" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <label class="sw"><input type="checkbox" id="pPos" checked> Nur passende Position</label>
+    <input id="pQ" type="search" class="sq" name="spielersuche" placeholder="Spieler suchen …" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" inputmode="search">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px"><label class="sw" style="margin:0"><input type="checkbox" id="pPos" checked> Nur passende Position</label><button class="fo" id="pDel" type="button" style="margin:0">Entfernen ✕</button></div>
     <div id="pL"></div>
-    <button class="rbtn" id="pDel" type="button" style="margin-top:10px"><span>Spieler entfernen</span><span>✕</span></button>
   </div>
 </div>
+<div class="sheet" id="fsh" hidden>
+  <div class="sh-bg" data-close></div>
+  <div class="sh-body">
+    <div class="sh-top"><div class="shn"><b>Formation wählen</b><span class="note">Passende Spieler bleiben im Team</span></div><button class="xb" data-close aria-label="Schließen">✕</button></div>
+    <div id="fl"></div>
+  </div>
+</div>
+<div class="dlg" id="dlg" hidden><div class="dlg-bg"></div><div class="dlg-box"><b id="dT"></b><p class="note" id="dX" style="margin:8px 0 0"></p><div class="dlg-btn"><button class="gh" id="dNo" type="button">Abbrechen</button><button id="dYes" type="button">OK</button></div></div></div>
+<div class="toast" id="toast"></div>
 <div class="sheet" id="rsk" hidden>
   <div class="sh-bg" data-close></div>
   <div class="sh-body">
@@ -314,6 +344,19 @@ let D=null,LK=null,FIL='all',CR=null;
 const RAW='https://raw.githubusercontent.com/xlTwiiXx/FC27-scout/data/';
 let MAIN=null;
 
+/* ---------- Fenster, Dialog, Hinweis ---------- */
+function fitSheet(el){const v=window.visualViewport;el.style.top=(v?v.offsetTop:0)+'px';el.style.height=(v?v.height:window.innerHeight)+'px'}
+function openSheet(id){const el=$(id);el.hidden=false;document.body.style.overflow='hidden';fitSheet(el)}
+function closeSheetId(id){$(id).hidden=true;if(![...document.querySelectorAll('.sheet,.dlg')].some(s=>!s.hidden))document.body.style.overflow=''}
+if(window.visualViewport)['resize','scroll'].forEach(e=>visualViewport.addEventListener(e,()=>document.querySelectorAll('.sheet:not([hidden])').forEach(fitSheet)));
+function ask(title,text,ok){
+  return new Promise(res=>{
+    $('dT').textContent=title;$('dX').textContent=text;$('dYes').textContent=ok||'OK';$('dlg').hidden=false;document.body.style.overflow='hidden';
+    const done=v=>{$('dlg').hidden=true;if(![...document.querySelectorAll('.sheet:not([hidden])')].length)document.body.style.overflow='';$('dYes').onclick=$('dNo').onclick=null;res(v)};
+    $('dYes').onclick=()=>done(true);$('dNo').onclick=()=>done(false);
+  });
+}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2400)}
 /* ---------- Risiko ---------- */
 const RISK={
   low:{n:'Geringes Risiko',min:75,max:86,share:.10,cap:40,txt:'Futter und günstige Gold-Karten, Rating 75 bis 86. Viele Stück mit kleinen Einsätzen: höchstens 10 % deines Budgets pro Karte, bis 40 Stück.'},
@@ -324,9 +367,9 @@ let RK='mid';try{RK=localStorage.getItem('fc27risk')||'mid'}catch(e){}if(!RISK[R
 function setRisk(k){RK=k;try{localStorage.setItem('fc27risk',k)}catch(e){}$('rtx').textContent=RISK[k].n;render()}
 function openRisk(){
   $('rkl').innerHTML=Object.entries(RISK).map(([k,r])=>`<button class="ro ${k===RK?'on':''}" data-k="${k}"><b>${r.n}</b><span>${r.txt}</span></button>`).join('');
-  $('rsk').hidden=false;document.body.style.overflow='hidden';
+  openSheet('rsk');
 }
-function closeRisk(){$('rsk').hidden=true;document.body.style.overflow=''}
+function closeRisk(){closeSheetId('rsk')}
 
 /* ---------- Kartenbild (FUT.GG) mit Ersatz-Schild ---------- */
 const IMGB='https://game-assets.fut.gg/cdn-cgi/image/quality=85,format=auto,width=300/2027/futgg-player-item-card/';
@@ -481,6 +524,7 @@ function renderCheap(){
   $('chh').textContent=`Cheapest ${CR} · ${l.length} Karten am Markt`;
   $('chl').innerHTML=l.slice(0,15).map(rowHTML).join('');
 }
+let LKN=40;
 const tagsOf=t=>{const a=(t.tags||[]).slice();if(/totw|team of the week/i.test(t.text)&&!a.includes('TOTW'))a.push('TOTW');return a};
 function renderLeaks(){
   const box=$('lk');
@@ -489,17 +533,18 @@ function renderLeaks(){
   LK.tweets=(LK.tweets||[]).filter(t=>t.t>=cut&&t.kind!=='news');
   const accs=LK.accounts||{},isT=FIL==='TOTW';
   const list=LK.tweets.filter(t=>FIL==='all'||tagsOf(t).includes(FIL));
-  const fresh=LK.tweets.filter(t=>t.t>Date.now()-864e5).length;
-  $('lkc').textContent=fresh?String(fresh):'';
+  const seen=Math.max(getSeen(),Date.now()-2*864e5),fresh=LK.tweets.filter(t=>t.t>seen).length;
+  if($('t-leaks').classList.contains('on')){markLeaksSeen()}else $('lkc').textContent=fresh?String(fresh):'';
   const head=`<p class="note" style="margin:0 0 6px">Stand ${ago(Date.parse(LK.updated))} · ${list.length} Beiträge${isT?' · TOTW-Ansicht: gepostete Teams als Leak oder Prognose, jeweils markiert':''}</p>`;
   const bad=Object.values(accs).length&&Object.values(accs).every(i=>!i.ok);
-  box.innerHTML=head+(list.slice(0,40).map(t=>{
+  box.innerHTML=head+(list.slice(0,LKN).map(t=>{
     const av=(accs[t.handle]&&accs[t.handle].avatar)||t.avatar||'',ini=esc((t.handle||'?')[0].toUpperCase());
     const mg=(t.media&&t.media.length)?`<div class="mg n${Math.min(t.media.length,4)}">${t.media.map(u=>`<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`).join('')}</div>`:'';
     const tg=tagsOf(t).filter(x=>x!=='Icon/Hero').map(x=>`<span>${esc(x)}</span>`).join('')+(isT||t.pred?`<span class="${t.pred?'pr2':'lkb'}">${t.pred?'PROGNOSE':'LEAK'}</span>`:'');
-    return `<article class="lk"><div class="av">${ini}${av?`<img src="${esc(av)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</div><div class="lb"><div class="lh"><b>${esc(t.name&&t.name!==t.handle?t.name:'@'+t.handle)}</b><span class="note">@${esc(t.handle)} · ${ago(t.t)}</span></div><div class="tx">${esc(t.text)}</div>${mg}<div class="tg">${tg}</div><a href="${esc(t.url)}" target="_blank" rel="noopener">Auf X öffnen ↗</a></div></article>`}).join('')||`<span class="note">${bad?'Die X-Konten waren beim letzten Abruf nicht erreichbar.':'Keine passenden Beiträge.'}</span>`);
+    return `<article class="lk"><div class="av">${ini}${av?`<img src="${esc(av)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</div><div class="lb"><div class="lh"><b>${esc(t.name&&t.name!==t.handle?t.name:'@'+t.handle)}</b><span class="note">@${esc(t.handle)} · ${ago(t.t)}</span></div>${t.rt?`<div class="note" style="margin:0 0 2px">↻ Repost von @${esc(t.rt)}</div>`:''}<div class="tx">${t.text?esc(t.text):'<span class="note">Bild-Beitrag</span>'}</div>${mg}<div class="tg">${tg}</div><a href="${esc(t.url)}" target="_blank" rel="noopener">Auf X öffnen ↗</a></div></article>`}).join('')||`<span class="note">${bad?'Die X-Konten waren beim letzten Abruf nicht erreichbar.':'Keine passenden Beiträge.'}</span>`)+(list.length>LKN?`<button class="rbtn" id="lkMore" type="button" style="margin-top:10px"><span>Mehr anzeigen (${list.length-LKN} weitere)</span><span>▾</span></button>`:'');
 }
-let TM=null;
+let TM=null,EVT='event';
+function setEvt(v){EVT=v;document.querySelectorAll('#evSeg button').forEach(b=>b.classList.toggle('on',b.dataset.e===v));$('evPE').hidden=v!=='event';$('evPT').hidden=v!=='totw'}
 function renderEvent(){
   if(!D)return;
   const byKey=new Map();
@@ -624,15 +669,13 @@ function chemistry(){
   return {info,res,total};
 }
 function renderTeam(){
-  const sel=$('tbF');
-  if(!sel.options.length)sel.innerHTML=Object.keys(FORMS).map(f=>`<option>${f}</option>`).join('');
-  sel.value=TB.f;$('tbChk').checked=TB.chk;
+  $('tbFt').textContent=TB.f;$('tbChk').checked=TB.chk;
   const sl=slotsOf(TB.f),ch=chemistry();
   $('pitch').innerHTML=sl.map((s,i)=>{
     const x=ch.info[i],r=ch.res[i];
     if(!x)return `<div class="slot" data-slot="${i}" style="left:${s.x}%;top:${s.y}%"><div class="em">${s.pos}</div></div>`;
     const cls=r.unknown?'cq':'c'+r.pts;
-    return `<div class="slot ${x.inPos?'':'oop'}" data-slot="${i}" style="left:${s.x}%;top:${s.y}%"><div class="ca">${cardArt(x.c,'')}<span class="chm ${cls}">${r.unknown?'?':r.pts}</span>${x.inPos?'':`<span class="pp">${s.pos}?</span>`}</div><div class="nm2">${esc(x.c.name)}</div></div>`;
+    return `<div class="slot filled ${x.inPos?'':'oop'}" data-slot="${i}" style="left:${s.x}%;top:${s.y}%"><button class="rm" data-rm="${i}" aria-label="Entfernen">×</button><div class="ca">${cardArt(x.c,'')}<span class="chm ${cls}">${r.unknown?'?':r.pts}</span>${x.inPos?'':`<span class="pp">${s.pos}?</span>`}</div><div class="nm2">${esc(x.c.name)}</div></div>`;
   }).join('');
   const placed=ch.info.filter(Boolean);
   const prices=placed.map(x=>priceOf(x.c.id));
@@ -670,9 +713,9 @@ function openPick(i){
   TBSLOT=i;const s=slotsOf(TB.f)[i];
   $('pT').textContent=`Spieler für ${s.pos}`;$('pS').textContent=TB.s[i]?'Tippe eine andere Karte zum Tauschen':'Name eintippen oder Liste durchsehen';
   $('pQ').value='';$('pPos').checked=true;$('pDel').style.display=TB.s[i]?'':'none';
-  $('pick').hidden=false;document.body.style.overflow='hidden';pickList();
+  openSheet('pick');pickList();
 }
-function closePick(){$('pick').hidden=true;document.body.style.overflow='';TBSLOT=null}
+function closePick(){closeSheetId('pick');TBSLOT=null}
 function pickList(){
   if(TBSLOT==null)return;
   const sl=slotsOf(TB.f)[TBSLOT],q=norm($('pQ').value).trim(),only=$('pPos').checked;
@@ -708,14 +751,14 @@ function openCard(id){
   $('cB').value=dots(p);$('cS').value=dots(!an.why&&an.sellCons>p?an.sellCons:Math.round(p*1.1));
   calc();
   document.querySelectorAll('#sg button').forEach(b=>b.classList.toggle('on',b.dataset.v===SHV));
-  $('sheet').hidden=false;document.body.style.overflow='hidden';
+  openSheet('sheet');
   drawChart();
 }
 function calc(){
   const b=num($('cB').value),s=num($('cS').value),net=s*.95,pf=net-b;
   $('cR').innerHTML=s?`Verkaufst du für <b>${fmt(s)}</b>, erhältst du <b class="ok">${fmt(net)}</b> (nach 5 % Steuer, das sind ${fmt(s*.05)} Coins).${b?`<br>Gewinn bei Einkauf für ${fmt(b)}: <b class="${pf>=0?'ok':'rd'}">${pf>=0?'+':''}${fmt(pf)}</b> (${pct(b?pf/b:null)})`:''}`:'Gib einen Verkaufspreis ein.';
 }
-function closeSheet(){$('sheet').hidden=true;document.body.style.overflow='';SH=null}
+function closeSheet(){closeSheetId('sheet');SH=null}
 function drawChart(){
   const c=SH;if(!c)return;
   const W=640,HH=300,L=62,R=16,T=14,B=30,pw=W-L-R,ph=HH-T-B;
@@ -790,10 +833,16 @@ async function load(){
   rebuild();rebuildAll();render();renderCheap();renderEvent();renderLeaks();renderTeam();
   loadTeamData();
 }
-function showTab(n){
+const SEEN_KEY='fc27leakseen';
+const getSeen=()=>{try{return +localStorage.getItem(SEEN_KEY)||0}catch(e){return 0}};
+function markLeaksSeen(){try{localStorage.setItem(SEEN_KEY,String(Date.now()))}catch(e){}const c=$('lkc');if(c)c.textContent=''}
+function showTab(n,click){
+  const cur=document.querySelector('.tab.on'),same=!!cur&&cur.id==='t-'+n;
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+n));
   document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab===n));
   try{history.replaceState(null,'','#'+n)}catch(e){}
+  if(n==='leaks')markLeaksSeen();
+  if(same&&click){window.scrollTo({top:0,behavior:'smooth'});return}
   window.scrollTo(0,0);
 }
 function setTheme(t){
@@ -811,10 +860,58 @@ function fmtInput(el){
 $('coins').oninput=()=>{fmtInput($('coins'));render()};
 $('roi').oninput=render;
 $('rbtn').onclick=openRisk;
-$('tbF').onchange=()=>changeFormation($('tbF').value);
+$('lk').addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#lkMore')){LKN+=40;renderLeaks()}});
+document.querySelectorAll('#evSeg button').forEach(b=>b.onclick=()=>setEvt(b.dataset.e));
+$('tbFb').onclick=()=>{
+  const groups={'3':'Dreierkette','4':'Viererkette','5':'Fünferkette'};
+  $('fl').innerHTML=Object.keys(groups).map(k=>`<div class="fg">${groups[k]}</div>`+Object.keys(FORMS).filter(f=>f[0]===k).map(f=>`<button class="fo ${f===TB.f?'on':''}" data-f="${esc(f)}">${esc(f)}</button>`).join('')).join('');
+  openSheet('fsh');
+};
+$('fl').onclick=e=>{const b=e.target.closest&&e.target.closest('[data-f]');if(b){closeSheetId('fsh');changeFormation(b.dataset.f)}};
+$('fsh').onclick=e=>{if(e.target.closest&&e.target.closest('[data-close]'))closeSheetId('fsh')};
 $('tbChk').onchange=()=>{TB.chk=$('tbChk').checked;saveTB();renderTeam()};
-$('tbClr').onclick=()=>{if(confirm('Ganzes Team leeren?')){TB.s={};saveTB();renderTeam()}};
-$('pitch').onclick=e=>{const s=e.target.closest&&e.target.closest('[data-slot]');if(s)openPick(+s.dataset.slot)};
+$('tbClr').onclick=async()=>{if(!Object.keys(TB.s).length)return toast('Das Team ist schon leer');if(await ask('Team leeren','Alle Spieler aus der Aufstellung entfernen?','Leeren')){TB.s={};saveTB();renderTeam()}};
+let DR=null,blockClick=false,ghost=null;
+const canPlay=(c,pos)=>!TB.chk||cardPos(c).includes(pos);
+function slotAt(x,y){for(const el of document.elementsFromPoint(x,y)){const s=el.closest&&el.closest('.slot');if(s&&s.dataset.slot!=null)return +s.dataset.slot}return null}
+function startGhost(){
+  const src=DR.el.querySelector('.ca');ghost=document.createElement('div');ghost.className='ghost';ghost.innerHTML=src?src.innerHTML:'';document.body.appendChild(ghost);
+  const sl=slotsOf(TB.f),c=cardObj(TB.s[DR.i]);
+  document.querySelectorAll('#pitch .slot').forEach(el=>{const i=+el.dataset.slot;if(i===DR.i)return;el.classList.add(canPlay(c,sl[i].pos)&&(!TB.s[i]||canPlay(cardObj(TB.s[i]),sl[DR.i].pos))?'tok':'tno')});
+  DR.el.style.opacity='.4';
+}
+function moveGhost(e){if(ghost){ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px'}}
+function endGhost(){if(ghost){ghost.remove();ghost=null}document.querySelectorAll('#pitch .slot').forEach(el=>{el.classList.remove('tok','tno');el.style.opacity=''})}
+function dropOn(from,to){
+  if(to==null||to===from)return;
+  const sl=slotsOf(TB.f),a=cardObj(TB.s[from]),bid=TB.s[to],b=bid?cardObj(bid):null;
+  if(!a)return;
+  if(!canPlay(a,sl[to].pos))return toast(`${a.name} kann nicht auf ${sl[to].pos} spielen`);
+  if(b&&!canPlay(b,sl[from].pos))return toast(`${b.name} kann nicht auf ${sl[from].pos} spielen, Tausch nicht möglich`);
+  TB.s[to]=a.id;if(b)TB.s[from]=b.id;else delete TB.s[from];
+  saveTB();renderTeam();
+}
+$('pitch').addEventListener('pointerdown',e=>{
+  const s=e.target.closest&&e.target.closest('.slot.filled');
+  if(!s||e.target.closest('[data-rm]'))return;
+  DR={i:+s.dataset.slot,x:e.clientX,y:e.clientY,moved:false,el:s};
+});
+window.addEventListener('pointermove',e=>{
+  if(!DR)return;
+  if(!DR.moved&&Math.hypot(e.clientX-DR.x,e.clientY-DR.y)>9){DR.moved=true;startGhost()}
+  if(DR.moved)moveGhost(e);
+});
+window.addEventListener('pointerup',e=>{
+  if(!DR)return;const d=DR;DR=null;
+  if(d.moved){endGhost();blockClick=true;setTimeout(()=>blockClick=false,50);dropOn(d.i,slotAt(e.clientX,e.clientY))}
+});
+window.addEventListener('pointercancel',()=>{if(DR){endGhost();DR=null}});
+$('pitch').onclick=e=>{
+  if(blockClick)return;
+  const r=e.target.closest&&e.target.closest('[data-rm]');
+  if(r){delete TB.s[+r.dataset.rm];saveTB();renderTeam();return}
+  const s=e.target.closest&&e.target.closest('[data-slot]');if(s)openPick(+s.dataset.slot);
+};
 $('pQ').oninput=pickList;$('pPos').onchange=pickList;
 $('pL').onclick=e=>{const r=e.target.closest&&e.target.closest('[data-pick]');if(!r||TBSLOT==null)return;const id=r.dataset.pick;for(const k of Object.keys(TB.s))if(TB.s[k]===id)delete TB.s[k];TB.s[TBSLOT]=id;saveTB();closePick();renderTeam()};
 $('pDel').onclick=()=>{if(TBSLOT!=null){delete TB.s[TBSLOT];saveTB();closePick();renderTeam()}};
@@ -827,7 +924,7 @@ document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
   $('hold').innerHTML=`<option value="${b.dataset.v}" selected>${b.dataset.v}</option>`;$('hold').value=b.dataset.v;render();
 });
-document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab,true));
 document.querySelectorAll('#lf button').forEach(b=>b.onclick=()=>{FIL=b.dataset.f;document.querySelectorAll('#lf button').forEach(x=>x.classList.toggle('on',x===b));renderLeaks()});
 document.querySelectorAll('#th button').forEach(b=>b.onclick=()=>setTheme(b.dataset.t));
 $('ov').onclick=e=>{const b=e.target.closest&&e.target.closest('[data-r]');if(b){CR=+b.dataset.r;renderCheap()}};
