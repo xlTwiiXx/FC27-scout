@@ -3,7 +3,7 @@
 // Jeder Lauf bearbeitet einen Teil der Spieler (metaPerRun) und macht beim naechsten Mal weiter. Kostenlos, kein Apify.
 import fs from 'node:fs';
 
-const cfg = { metaPerRun: 60, metaMaxMinutes: 4, metaDelayMs: 1200, ...JSON.parse(fs.readFileSync('config.json', 'utf8')) };
+const cfg = { metaPerRun: 400, metaMaxMinutes: 14, metaDelayMs: 1000, metaConcurrency: 3, ...JSON.parse(fs.readFileSync('config.json', 'utf8')) };
 const DIR = process.env.DATA_DIR || '.';
 const startedAt = Date.now();
 const maxMin = process.env.META_MAX_SECONDS ? Number(process.env.META_MAX_SECONDS) / 60 : cfg.metaMaxMinutes;
@@ -68,7 +68,6 @@ const ctx = await browser.newContext({
 });
 const gg = await ctx.newPage();
 try { await gg.goto('https://www.fut.gg/', { waitUntil: 'domcontentloaded', timeout: 45000 }); await gg.waitForTimeout(2500); } catch (e) { console.error('FUT.GG nicht erreichbar:', String(e.message).split('\n')[0]); }
-const ea = await ctx.newPage();
 
 async function fromGG(id) {
   try {
@@ -78,7 +77,7 @@ async function fromGG(id) {
     return { status: r.s, json: j, data: extractGG(j) };
   } catch (e) { return { error: String(e.message).split('\n')[0] }; }
 }
-async function fromEA(id, slug) {
+async function fromEA(ea, id, slug) {
   for (const sl of [slug, 'player']) {
     try {
       const resp = await ea.goto(`https://www.ea.com/games/ea-sports-fc/ratings/player-ratings/${sl}/${id}`, { waitUntil: 'domcontentloaded', timeout: 40000 });
@@ -87,8 +86,12 @@ async function fromEA(id, slug) {
       const d = await ea.evaluate(() => {
         const t = document.body.innerText, g = (re) => { const m = t.match(re); return m ? m[1].trim() : ''; };
         const idOf = (sel) => { const a = document.querySelector(sel); const m = a && a.href.match(/\/(\d+)\/?$/); return m ? m[1] : null; };
-        const am = t.match(/\nAlt Positions\n+((?:[A-Z]{2,3}\n+)+)/);
-        return { pos: g(/\nPosition\n+([A-Z]{2,3})\b/), alt: am ? am[1].split(/\n+/).filter((x) => /^[A-Z]{2,3}$/.test(x)) : [], nation: g(/\nNation\n+([^\n]+)/), league: g(/\nLeague\n+([^\n]+)/), team: g(/\nTeam\n+([^\n]+)/), nid: idOf('a[href*="/nations-ratings/"]'), cid: idOf('a[href*="/teams-ratings/"]') };
+        // Alternativpositionen: alles Gueltige direkt nach "Alt Positions", egal ob in Zeilen oder in einer Zeile
+        const POS = new Set(['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'ST', 'CF', 'LF', 'RF', 'LS', 'RS']);
+        const ma = t.match(/Alt(?:ernative)?\.? Positions?\s*/i);
+        const alt = [];
+        if (ma) for (const tok of t.slice(ma.index + ma[0].length, ma.index + ma[0].length + 100).split(/\s+/).filter(Boolean)) { if (POS.has(tok)) { if (!alt.includes(tok)) alt.push(tok); } else break; }
+        return { pos: g(/\nPosition\n+([A-Z]{2,3})\b/), alt, nation: g(/\nNation\n+([^\n]+)/), league: g(/\nLeague\n+([^\n]+)/), team: g(/\nTeam\n+([^\n]+)/), nid: idOf('a[href*="/nations-ratings/"]'), cid: idOf('a[href*="/teams-ratings/"]') };
       });
       if (d.nation || d.team) return d;
     } catch {}
@@ -96,35 +99,41 @@ async function fromEA(id, slug) {
   return null;
 }
 
-let ok = 0, n = 0, dbg = 0;
-for (const [id, w] of todo) {
-  if ((Date.now() - startedAt) / 60000 > maxMin) { console.log('Zeitlimit erreicht.'); break; }
-  const g = await fromGG(id);
-  const e = await fromEA(id, w.slug);
-  const rec = meta.players[id] || { retry: 0 };
-  const d = g.data || {};
-  const pick = (ea, gg) => (ea && (ea.id != null || ea.name) ? ea : gg && (gg.id != null || gg.name) ? gg : null);
-  const eaNat = e && e.nation ? { id: e.nid, name: e.nation } : null;
-  const eaLg = e && e.league ? { id: e.league.toLowerCase(), name: e.league } : null;
-  const eaClub = e && e.team ? { id: e.cid, name: e.team } : null;
-  const nat = pick(eaNat, d.nat), lg = pick(eaLg, d.lg), club = pick(eaClub, d.club);
-  // Alternativpositionen: die EA-Seite ist massgeblich, wenn sie gefunden wurde (auch wenn dort keine stehen)
-  const alt = e ? e.alt : (d.alt && d.alt.length ? d.alt : rec.alt || []);
-  Object.assign(rec, { nat, lg, club, pos: (e && e.pos) || d.pos || rec.pos || null, alt, v: 2, src: e ? (g.data ? 'ea+gg' : 'ea') : g.data ? 'gg' : null });
-  if (d.woman !== undefined) rec.woman = !!d.woman;
-  if (!nat) rec.retry = (rec.retry || 0) + 1;
-  meta.players[id] = rec;
-  n++; if (nat) ok++;
-  if (dbg < 2) {
-    dbg++;
-    console.log(`--- Debug Spieler ${id} (${w.slug})`);
-    console.log('FUT.GG-API: Status', g.status ?? g.error ?? '-', g.json ? 'Schluessel: ' + Object.keys(g.json).join(',') : '', g.bad ? 'Antwort: ' + g.bad : '');
-    if (g.json) console.log('  Beispiel:', JSON.stringify(g.json).slice(0, 500));
-    console.log('  Erkannt (GG):', JSON.stringify(g.data || null));
-    console.log('EA-Seite:', JSON.stringify(e));
+let ok = 0, n = 0, dbg = 0, next = 0;
+async function worker() {
+  const ea = await ctx.newPage();
+  while (next < todo.length) {
+    if ((Date.now() - startedAt) / 60000 > maxMin) { break; }
+    const [id, w] = todo[next++];
+    const g = await fromGG(id);
+    const e = await fromEA(ea, id, w.slug);
+    const rec = meta.players[id] || { retry: 0 };
+    const d = g.data || {};
+    const pick = (eaV, ggV) => (eaV && (eaV.id != null || eaV.name) ? eaV : ggV && (ggV.id != null || ggV.name) ? ggV : null);
+    const eaNat = e && e.nation ? { id: e.nid, name: e.nation } : null;
+    const eaLg = e && e.league ? { id: e.league.toLowerCase(), name: e.league } : null;
+    const eaClub = e && e.team ? { id: e.cid, name: e.team } : null;
+    const nat = pick(eaNat, d.nat), lg = pick(eaLg, d.lg), club = pick(eaClub, d.club);
+    // Alternativpositionen: die EA-Seite ist massgeblich, wenn sie gefunden wurde (auch wenn dort keine stehen)
+    const alt = e ? e.alt : (d.alt && d.alt.length ? d.alt : rec.alt || []);
+    Object.assign(rec, { nat, lg, club, pos: (e && e.pos) || d.pos || rec.pos || null, alt, v: 2, src: e ? (g.data ? 'ea+gg' : 'ea') : g.data ? 'gg' : null });
+    if (d.woman !== undefined) rec.woman = !!d.woman;
+    if (!nat) rec.retry = (rec.retry || 0) + 1;
+    meta.players[id] = rec;
+    n++; if (nat) ok++;
+    if (dbg < 2) {
+      dbg++;
+      console.log(`--- Debug Spieler ${id} (${w.slug})`);
+      console.log('FUT.GG-API: Status', g.status ?? g.error ?? '-', g.json ? 'Schluessel: ' + Object.keys(g.json).join(',') : '', g.bad ? 'Antwort: ' + g.bad : '');
+      if (g.json) console.log('  Beispiel:', JSON.stringify(g.json).slice(0, 500));
+      console.log('  Erkannt (GG):', JSON.stringify(g.data || null));
+      console.log('EA-Seite:', JSON.stringify(e));
+    }
+    await sleep(cfg.metaDelayMs);
   }
-  await sleep(cfg.metaDelayMs);
+  await ea.close();
 }
+await Promise.all(Array.from({ length: cfg.metaConcurrency }, worker));
 await browser.close();
 fs.mkdirSync(DIR, { recursive: true });
 fs.writeFileSync(`${DIR}/players-meta.json`, JSON.stringify({ updated: new Date().toISOString(), players: meta.players }));

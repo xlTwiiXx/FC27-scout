@@ -9,7 +9,6 @@ INTERVAL="${INTERVAL:-900}"             # 15 Minuten
 REMOTE_URL="${REMOTE_URL:-https://x-access-token:${GH_TOKEN:-}@github.com/${GITHUB_REPOSITORY:-}.git}"
 END=$(( $(date +%s) + LOOP_SECONDS ))
 LAST_LEAK_SLOT=""
-LAST_CATALOG_HOUR=""
 
 save() {
   (
@@ -59,16 +58,6 @@ while [ "$(date +%s)" -lt "$END" ]; do
   # Leaks von X: alle 30 Minuten
   SLOT="$(date -u +%H)$(( 10#$(date -u +%M) / 30 ))"
   if [ "$SLOT" != "$LAST_LEAK_SLOT" ] && extra leaks 100 node leaks.mjs; then LAST_LEAK_SLOT="$SLOT"; fi
-  # Katalog aller Karten ab 75: beim ersten Mal und dann alle 6 Stunden (dauert ca. 10 Minuten, darf den Takt einmal verschieben)
-  CH=$(date -u +%H)
-  if [ ! -f "$DATA_DIR/catalog.json" ] || { [ $((10#$CH % 6)) -eq 0 ] && [ "$CH" != "$LAST_CATALOG_HOUR" ]; }; then
-    if timeout 1500 node catalog.mjs; then LAST_CATALOG_HOUR="$CH"; else echo "catalog.mjs fehlgeschlagen"; fi
-  fi
-  # Chemie-Daten (Verein, Liga, Nation, Positionen): in jedem Durchlauf ein Teil der Spieler, bis alle da sind
-  if [ -f "$DATA_DIR/catalog.json" ]; then
-    MS=$(( $(left) - 30 )); [ "$MS" -gt 240 ] && MS=240
-    extra meta 120 env META_MAX_SECONDS="$MS" node meta.mjs
-  fi
   save || echo "Speichern fehlgeschlagen"
   NOW=$(date +%s)
   NEXT=$(( (NOW / INTERVAL + 1) * INTERVAL ))
