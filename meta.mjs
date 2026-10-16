@@ -3,7 +3,7 @@
 // Jeder Lauf bearbeitet einen Teil der Spieler (metaPerRun) und macht beim naechsten Mal weiter. Kostenlos, kein Apify.
 import fs from 'node:fs';
 
-const cfg = { metaPerRun: 400, metaMaxMinutes: 14, metaDelayMs: 1000, metaConcurrency: 3, ...JSON.parse(fs.readFileSync('config.json', 'utf8')) };
+const cfg = { metaPerRun: 400, metaMaxMinutes: 14, metaDelayMs: 500, metaConcurrency: 4, ...JSON.parse(fs.readFileSync('config.json', 'utf8')) };
 const DIR = process.env.DATA_DIR || '.';
 const startedAt = Date.now();
 const maxMin = process.env.META_MAX_SECONDS ? Number(process.env.META_MAX_SECONDS) / 60 : cfg.metaMaxMinutes;
@@ -12,6 +12,7 @@ let catalog = { cards: {} }, meta = { players: {} };
 try { catalog = JSON.parse(fs.readFileSync(`${DIR}/catalog.json`, 'utf8')); } catch {}
 try { meta = JSON.parse(fs.readFileSync(`${DIR}/players-meta.json`, 'utf8')); } catch {}
 meta.players = meta.players || {};
+meta.items = meta.items || {};
 
 // ---- Spieler (EA-ID) aus dem Katalog ----
 const wanted = new Map();
@@ -22,7 +23,7 @@ for (const c of Object.values(catalog.cards)) {
   w.rating = Math.max(w.rating, c.rating);
   wanted.set(m[1], w);
 }
-const todo = [...wanted.entries()].filter(([id]) => { const r = meta.players[id]; return !r || (r.v !== 2 && (r.retry || 0) < 3) || (!r.nat && (r.retry || 0) < 3); }).sort((a, b) => b[1].rating - a[1].rating).slice(0, cfg.metaPerRun);
+const todo = [...wanted.entries()].filter(([id]) => { const r = meta.players[id]; return !r || (r.v !== 3 && (r.retry || 0) < 3) || (!r.nat && (r.retry || 0) < 3); }).sort((a, b) => b[1].rating - a[1].rating).slice(0, cfg.metaPerRun);
 console.log(`Meta: ${wanted.size} Spieler im Katalog, ${Object.keys(meta.players).length} mit Daten, ${todo.length} in diesem Lauf.`);
 if (!todo.length) { console.log('Nichts zu tun.'); process.exit(0); }
 
@@ -38,6 +39,34 @@ const posStr = (v) => {
   if (typeof v === 'object') return v.shortLabel || v.abbreviation || v.short || v.id || v.name || null;
   return String(v);
 };
+// EA-Positions-IDs: 0 GK, 2 RWB, 3 RB, 4-6 CB, 7 LB, 8 LWB, 9-11 CDM, 12 RM, 13-15 CM, 16 LM, 17-19 CAM, 20-22 CF, 23 RW, 24-26 ST, 27 LW
+const POSMAP = { 0: 'GK', 2: 'RWB', 3: 'RB', 4: 'CB', 5: 'CB', 6: 'CB', 7: 'LB', 8: 'LWB', 9: 'CDM', 10: 'CDM', 11: 'CDM', 12: 'RM', 13: 'CM', 14: 'CM', 15: 'CM', 16: 'LM', 17: 'CAM', 18: 'CAM', 19: 'CAM', 20: 'CF', 21: 'CF', 22: 'CF', 23: 'RW', 24: 'ST', 25: 'ST', 26: 'ST', 27: 'LW' };
+const toPos = (v) => {
+  if (v == null) return null;
+  if (typeof v === 'object') v = v.shortLabel || v.abbreviation || v.short || v.id || v.name;
+  const s = String(v);
+  return /^\d+$/.test(s) ? POSMAP[+s] || null : s.toUpperCase();
+};
+// Alle Karten des Spielers aus dem aktuellen Spiel (FC 27). Aeltere Spiele (FIFA 22, 23 ...) stehen in derselben Antwort und werden ignoriert.
+export function extractItems(json) {
+  const out = [];
+  walk(json, (o) => {
+    if (Array.isArray(o) || o.eaId == null || String(o.game) !== '27') return;
+    const ov = o.overall ?? o.overallRating ?? o.rating;
+    if (typeof ov !== 'number') return;
+    const altRaw = o.alternativePositions ?? o.alternatePositions ?? o.altPositions ?? o.alternativePositionIds ?? o.alternatePositionIds ?? [o.preferredPosition2, o.preferredPosition3].filter((x) => x != null);
+    const pos = toPos(o.position ?? o.positionId ?? o.preferredPosition1);
+    out.push({
+      id: String(o.eaId), ov, pos,
+      alt: [...new Set((Array.isArray(altRaw) ? altRaw : []).map(toPos).filter((x) => x && x !== pos))],
+      nat: asRef(o.nation ?? o.nationality ?? o.country ?? (o.nationId != null ? { id: o.nationId } : null)),
+      lg: asRef(o.league ?? (o.leagueId != null ? { id: o.leagueId } : null)),
+      club: asRef(o.club ?? o.team ?? (o.clubId != null ? { id: o.clubId } : o.teamId != null ? { id: o.teamId } : null)),
+      keys: Object.keys(o).join(','),
+    });
+  });
+  return out;
+}
 export function extractGG(json) {
   let best = null;
   walk(json, (o) => {
@@ -106,18 +135,19 @@ async function worker() {
     if ((Date.now() - startedAt) / 60000 > maxMin) { break; }
     const [id, w] = todo[next++];
     const g = await fromGG(id);
-    const e = await fromEA(ea, id, w.slug);
+    const its = g.json ? extractItems(g.json) : [];
+    let e = null;
     const rec = meta.players[id] || { retry: 0 };
-    const d = g.data || {};
-    const pick = (eaV, ggV) => (eaV && (eaV.id != null || eaV.name) ? eaV : ggV && (ggV.id != null || ggV.name) ? ggV : null);
-    const eaNat = e && e.nation ? { id: e.nid, name: e.nation } : null;
-    const eaLg = e && e.league ? { id: e.league.toLowerCase(), name: e.league } : null;
-    const eaClub = e && e.team ? { id: e.cid, name: e.team } : null;
-    const nat = pick(eaNat, d.nat), lg = pick(eaLg, d.lg), club = pick(eaClub, d.club);
-    // Alternativpositionen: die EA-Seite ist massgeblich, wenn sie gefunden wurde (auch wenn dort keine stehen)
-    const alt = e ? e.alt : (d.alt && d.alt.length ? d.alt : rec.alt || []);
-    Object.assign(rec, { nat, lg, club, pos: (e && e.pos) || d.pos || rec.pos || null, alt, v: 2, src: e ? (g.data ? 'ea+gg' : 'ea') : g.data ? 'gg' : null });
-    if (d.woman !== undefined) rec.woman = !!d.woman;
+    if (its.length) {
+      const base = its.find((x) => x.id === String(id)) || its[0];
+      Object.assign(rec, { nat: base.nat, lg: base.lg, club: base.club, pos: base.pos, alt: base.alt, v: 3, src: 'gg', n27: its.length });
+      for (const x of its) meta.items[x.id] = { nat: x.nat, lg: x.lg, club: x.club, pos: x.pos, alt: x.alt };
+    } else {
+      // Ersatz: EA-Ratingseite (nur Gold, Silber, Bronze zum Start des Spiels)
+      e = await fromEA(ea, id, w.slug);
+      if (e) Object.assign(rec, { nat: e.nation ? { id: e.nid, name: e.nation } : null, lg: e.league ? { id: e.league.toLowerCase(), name: e.league } : null, club: e.team ? { id: e.cid, name: e.team } : null, pos: e.pos || null, alt: e.alt || [], v: 3, src: 'ea' });
+    }
+    const nat = rec.nat;
     if (!nat) rec.retry = (rec.retry || 0) + 1;
     meta.players[id] = rec;
     n++; if (nat) ok++;
@@ -125,9 +155,8 @@ async function worker() {
       dbg++;
       console.log(`--- Debug Spieler ${id} (${w.slug})`);
       console.log('FUT.GG-API: Status', g.status ?? g.error ?? '-', g.json ? 'Schluessel: ' + Object.keys(g.json).join(',') : '', g.bad ? 'Antwort: ' + g.bad : '');
-      if (g.json) console.log('  Beispiel:', JSON.stringify(g.json).slice(0, 500));
-      console.log('  Erkannt (GG):', JSON.stringify(g.data || null));
-      console.log('EA-Seite:', JSON.stringify(e));
+      console.log(`  FC-27-Karten im Ergebnis: ${its.length}${its[0] ? ' | Felder: ' + its[0].keys.slice(0, 400) : ''}`);
+      console.log('  Datensatz:', JSON.stringify({ nat: rec.nat, lg: rec.lg, club: rec.club, pos: rec.pos, alt: rec.alt, src: rec.src }));
     }
     await sleep(cfg.metaDelayMs);
   }
@@ -136,6 +165,6 @@ async function worker() {
 await Promise.all(Array.from({ length: cfg.metaConcurrency }, worker));
 await browser.close();
 fs.mkdirSync(DIR, { recursive: true });
-fs.writeFileSync(`${DIR}/players-meta.json`, JSON.stringify({ updated: new Date().toISOString(), players: meta.players }));
+fs.writeFileSync(`${DIR}/players-meta.json`, JSON.stringify({ updated: new Date().toISOString(), players: meta.players, items: meta.items }));
 const all = Object.values(meta.players);
 console.log(`Meta fertig: ${n} bearbeitet, ${ok} mit Nation/Liga/Verein. Gesamt: ${all.length}/${wanted.size} Spieler, davon mit Alternativpositionen: ${all.filter((p) => p.alt && p.alt.length).length}.`);
