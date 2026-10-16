@@ -1,0 +1,52 @@
+name: update-meta
+
+on:
+  schedule:
+    - cron: "20 */3 * * *"   # Sicherheitsnetz: startet den Dauerlauf, falls er gerade nicht laeuft
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: scout-meta          # es laeuft immer nur ein Lauf; ein weiterer wartet
+  cancel-in-progress: false
+
+env:
+  DATA_DIR: datameta
+  GH_REPO: ${{ github.repository }}
+
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Daten holen (Branch data-meta, sonst die bisherigen Stand aus data)
+        run: |
+          mkdir -p "$DATA_DIR"
+          if git fetch -q --depth=1 origin data-meta 2>/dev/null; then SRC=data-meta
+          elif git fetch -q --depth=1 origin data 2>/dev/null; then SRC=data
+          else SRC=""; fi
+          if [ -n "$SRC" ]; then
+            for f in catalog.json players-meta.json; do
+              git show FETCH_HEAD:$f > "$DATA_DIR/$f" 2>/dev/null || rm -f "$DATA_DIR/$f"
+            done
+            echo "Daten aus Branch $SRC geladen"
+          fi
+          ls -la "$DATA_DIR"
+
+      - name: Browser installieren
+        run: |
+          npm install --no-save playwright@1.48.2
+          npx playwright install --with-deps chromium
+
+      - name: Dauerlauf Katalog und Chemie-Daten (ca. 5,5 Stunden)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash loop-meta.sh

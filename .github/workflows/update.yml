@@ -31,12 +31,12 @@ jobs:
         run: |
           mkdir -p "$DATA_DIR"
           if git fetch -q --depth=1 origin data 2>/dev/null; then
-            for f in prices.json prices-low.json leaks.json teams.json catalog.json players-meta.json; do
+            for f in prices.json prices-low.json leaks.json teams.json; do
               git show FETCH_HEAD:$f > "$DATA_DIR/$f" 2>/dev/null || rm -f "$DATA_DIR/$f"
             done
             echo "Daten aus dem Branch data geladen"
           else
-            for f in prices.json prices-low.json leaks.json teams.json catalog.json players-meta.json; do
+            for f in prices.json prices-low.json leaks.json teams.json; do
               if [ -f "$f" ]; then cp "$f" "$DATA_DIR/$f"; fi
             done
             echo "Branch data fehlt noch, Start mit den Dateien aus main"
