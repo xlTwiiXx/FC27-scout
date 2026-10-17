@@ -34,7 +34,7 @@ refresh_inputs() {
 }
 catalog_age() { # Sekunden seit dem letzten Katalog
   local u
-  u=$(node -e "try{console.log(Math.floor(Date.parse(JSON.parse(require('fs').readFileSync('$DATA_DIR/catalog.json','utf8')).updated)/1000)||0)}catch(e){console.log(0)}")
+  u=$(node -e "try{const c=JSON.parse(require('fs').readFileSync('$DATA_DIR/catalog.json','utf8'));console.log(c.imv===2?Math.floor(Date.parse(c.updated)/1000)||0:0)}catch(e){console.log(0)}")
   echo $(( $(date +%s) - u ))
 }
 

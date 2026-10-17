@@ -1,6 +1,7 @@
 // Katalog ALLER Karten ab Rating 75 (auch ohne Marktpreis, z. B. EXTINCT) fuer den Teambuilder.
 // Liest die FUT.GG-Spielerlisten pro Rating ohne den Marktfilter. Kostenlos auf GitHub Actions (Playwright), kein Apify.
 import fs from 'node:fs';
+const imPath = (u) => { const m = String(u || '').match(/game-assets\.fut\.gg\/(?:cdn-cgi\/image\/[^/]+\/)?([^?#]+)/); return m && !/placeholder/i.test(m[1]) ? m[1] : ''; };
 
 const range = (a, b) => Array.from({ length: Math.abs(b - a) + 1 }, (_, i) => (a > b ? a - i : a + i));
 const cfg = { catalogRatings: range(99, 75), catalogPages: 90, catalogConcurrency: 3, delayMs: 3000, catalogMaxMinutes: 20, ...JSON.parse(fs.readFileSync('config.json', 'utf8')) };
@@ -43,7 +44,7 @@ async function readPage(u) {
         if (!am) continue;
         seen.add(m[2]);
         out.push({ id: m[2], name: am[1], rating: +am[2], version: am[3], url: a.href,
-          im: img ? (img.currentSrc || img.src || img.getAttribute('data-src') || '') : '',
+          im: img ? ([img.currentSrc, img.src, img.getAttribute('data-src'), img.getAttribute('data-lazy-src'), (img.getAttribute('srcset') || '').split(' ')[0]].find((u) => u && u.includes('game-assets.fut.gg')) || '') : '',
           lines: (a.innerText || '').split('\n').map((s) => s.trim()).filter(Boolean) });
       }
       return out;
@@ -51,7 +52,7 @@ async function readPage(u) {
     const cards = raw.map((c) => ({
       id: c.id, name: c.name.trim(), rating: c.rating, version: c.version.trim(), url: c.url,
       pos: c.lines.find((l) => /^[A-Z]{2,3}$/.test(l)) || '?',
-      im: (c.im.split('futgg-player-item-card/')[1] || '').split('?')[0],
+      im: imPath(c.im),
     }));
     return { cards, status, title: await page.title() };
   } catch (e) {
@@ -90,6 +91,6 @@ await browser.close();
 const total = Object.keys(fresh).length;
 if (!total) { console.error('Keine Karten erhalten, catalog.json bleibt unveraendert.'); process.exit(1); }
 const cards = { ...prev.cards, ...fresh }; // nie etwas verlieren, falls ein Rating mal nicht lud
-fs.writeFileSync(FILE, JSON.stringify({ updated: new Date().toISOString(), n: Object.keys(cards).length, cards }));
+fs.writeFileSync(FILE, JSON.stringify({ updated: new Date().toISOString(), imv: 2, n: Object.keys(cards).length, cards }));
 console.log('Karten je Rating:', Object.entries(perRating).sort((a, b) => b[0] - a[0]).map(([r, n]) => `${r}:${n}`).join(' '));
 console.log(`Katalog fertig: ${total} aktuell gelesen, ${Object.keys(cards).length} gesamt, ${Math.round((Date.now() - startedAt) / 60000)} Min.`);

@@ -3,6 +3,7 @@
 // Schnelle Ratings (83-99) bei jedem Lauf -> prices.json
 // Langsame Ratings (75-82) nur alle N Stunden -> prices-low.json
 import fs from 'node:fs';
+const imPath = (u) => { const m = String(u || '').match(/game-assets\.fut\.gg\/(?:cdn-cgi\/image\/[^/]+\/)?([^?#]+)/); return m && !/placeholder/i.test(m[1]) ? m[1] : ''; };
 
 const range = (a, b) => Array.from({ length: Math.abs(b - a) + 1 }, (_, i) => (a > b ? a - i : a + i));
 const cfg = {
@@ -93,7 +94,7 @@ async function directPage(ctx, url) {
         if (!am) continue;
         seen.add(m[1]);
         out.push({ id: m[1], name: am[1], rating: +am[2], version: am[3], url: a.href,
-          im: img ? (img.currentSrc || img.src || img.getAttribute('data-src') || '') : '',
+          im: img ? ([img.currentSrc, img.src, img.getAttribute('data-src'), img.getAttribute('data-lazy-src'), (img.getAttribute('srcset') || '').split(' ')[0]].find((u) => u && u.includes('game-assets.fut.gg')) || '') : '',
           lines: a.innerText.split('\n').map((s) => s.trim()).filter(Boolean) });
       }
       return out;
@@ -101,7 +102,7 @@ async function directPage(ctx, url) {
     const cards = [];
     for (const c of raw) {
       const x = parseLines(c.lines);
-      if (x) cards.push({ id: c.id, name: c.name.trim(), rating: c.rating, version: c.version.trim(), pos: x.pos, price: x.price, url: c.url, im: (c.im.split('futgg-player-item-card/')[1] || '').split('?')[0] });
+      if (x) cards.push({ id: c.id, name: c.name.trim(), rating: c.rating, version: c.version.trim(), pos: x.pos, price: x.price, url: c.url, im: imPath(c.im) });
     }
     return { cards, title, status };
   } catch (e) {

@@ -217,6 +217,12 @@ background:repeating-linear-gradient(180deg,rgba(255,255,255,.035) 0 8.33%,trans
 .g3{display:grid;grid-template-columns:.7fr 1fr 1fr;gap:8px;margin-top:10px}
 .tres{margin-top:10px;font-size:13.5px;line-height:1.55}
 .trc .xb{width:30px;height:30px;font-size:15px}
+
+.trimg{width:52px;flex:none;text-align:center}.trimg .cim,.trimg .badge{width:44px;margin:0 auto}
+.mp{font-size:11px;font-weight:800;color:var(--ac);margin-top:3px;white-space:nowrap}
+.ipr{position:relative}.ipr input{padding-right:12px}
+.ipr .rfb{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:var(--tx);font-size:17px;line-height:30px;padding:0;cursor:pointer}
+.ipr:has(.rfb) input{padding-right:40px}
 </style>
 </head>
 <body>
@@ -409,11 +415,12 @@ function openRisk(){
 function closeRisk(){closeSheetId('rsk')}
 
 /* ---------- Kartenbild (FUT.GG) mit Ersatz-Schild ---------- */
-const IMGB='https://game-assets.fut.gg/cdn-cgi/image/quality=85,format=auto,width=300/2027/futgg-player-item-card/';
+const IMGB0='https://game-assets.fut.gg/cdn-cgi/image/quality=85,format=auto,width=300/';
+const IMGB=IMGB0+'2027/futgg-player-item-card/';
 function cardArt(c,cls){
   const cs=cardStyle(c.version),fb=`<div class="badge ${cls==='sm'||cls==='mini'?'sm':''}" style="background:${cs.bg};color:${cs.fg};box-shadow:${cs.sh}"><b>${c.rating}</b><span>${esc(c.pos||'')}</span></div>`;
   if(!c.im)return fb;
-  const u=c.im.startsWith('http')?c.im:IMGB+c.im;
+  const u=c.im.startsWith('http')?c.im:c.im.includes('/')?IMGB0+c.im:IMGB+c.im;
   return `<img class="cim ${cls||''}" src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-fb="${esc(fb)}" onerror="this.outerHTML=this.dataset.fb">`;
 }
 /* ---------- Kartendesigns (Special Cards) ---------- */
@@ -593,9 +600,9 @@ function renderEvent(){
     }).sort((a,b)=>((a.p==null)-(b.p==null))||((a.p||0)-(b.p||0)));
     const priced=items.filter(x=>x.p!=null);
     const html=items.map(x=>{
-      if(x.c&&x.p!=null)return rowHTML({c:x.c,p:x.p,ch:chOf(x.c)});
+      if(x.c&&x.p!=null)return rowHTML({c:(x.c.im?x.c:Object.assign({},x.c,{im:x.tc.im||''})),p:x.p,ch:chOf(x.c)});
       const cs=cardStyle(x.tc.version);
-      return `<div class="cr" style="cursor:default">${cardArt(Object.assign({rating:x.tc.rating,version:x.tc.version,pos:'–'},(x.tc.id&&CAT&&CAT.cards&&CAT.cards[x.tc.id])||{}),'mini')}<div class="cn"><b>${esc(x.tc.name)}</b><span style="color:${cs.ac}">${esc(x.tc.version)}</span></div><div class="cp"><b>–</b><span class="note">kein Marktpreis</span></div></div>`;
+      return `<div class="cr" style="cursor:default">${cardArt(Object.assign({rating:x.tc.rating,version:x.tc.version,pos:'–',name:x.tc.name,im:x.tc.im||''},(x.tc.id&&CAT&&CAT.cards&&CAT.cards[x.tc.id])||{}),'mini')}<div class="cn"><b>${esc(x.tc.name)}</b><span style="color:${cs.ac}">${esc(x.tc.version)}</span></div><div class="cp"><b>–</b><span class="note">kein Marktpreis</span></div></div>`;
     }).join('');
     return {html,n:items.length,np:priced.length,sum:priced.reduce((s,x)=>s+x.p,0)};
   };
@@ -655,7 +662,7 @@ function slotsOf(f){
   return out;
 }
 const eaOf=c=>{const m=((c&&c.url)||'').match(/\/players\/(\d+)-/);return m?m[1]:null};
-const metaOf=c=>{const e=eaOf(c),m=e&&META&&META.players&&META.players[e];return m&&m.nat?m:null};
+const metaOf=c=>{const it=META&&META.items&&c&&META.items[c.id];if(it&&it.nat)return it;const e=eaOf(c),m=e&&META&&META.players&&META.players[e];return m&&m.nat?m:null};
 const cardPos=c=>{const m=metaOf(c);return [...new Set([c.pos,m&&m.pos,...((m&&m.alt)||[])].filter(x=>x&&x!=='?'))]};
 const priceOf=id=>{const c=D&&D.cards[id];return c&&c.h&&c.h.length?c.h[c.h.length-1][1]:null};
 function cardObj(id){
@@ -791,13 +798,17 @@ function trResults(){
   $('trS').innerHTML=`<div><span>Plus gesamt</span><b class="${pf>=0?'ok':'rd'}">${pf>=0?'+':''}${fmt(pf)}</b></div><div><span>Einsatz</span><b>${fmt(inv)}</b></div><div><span>Erlös nach Steuer</span><b>${fmt(rev)}</b></div>`;
   $('trN').textContent=n?`${n} Trade${n>1?'s':''} eingerechnet · nach 5 % Steuer`:'Gewinn nach 5 % Steuer';
 }
+function trPrices(){ // aktuelle Marktpreise unter den Kartenbildern (auch nach dem Neuladen der Daten)
+  document.querySelectorAll('#trL [data-mp]').forEach(el=>{const p=priceOf(el.dataset.mp);el.textContent=p!=null?fmt(p):'kein Marktpreis'});
+}
 function renderTrades(){
   $('trL').innerHTML=TR.map((t,i)=>{
     const o=t.id?cardObj(t.id):null;
-    const inp=(k,l)=>`<div><label>${l}</label><input type="text" inputmode="numeric" autocomplete="off" data-i="${i}" data-k="${k}" value="${esc(t[k])}"></div>`;
-    return `<div class="trc"><div class="trp" data-pl="${i}">${o?cardArt(o,'mini'):'<div class="em2">+</div>'}<div class="cn"><b>${o?esc(o.name):'Spieler wählen'}</b><span>${o?`${o.rating} · ${esc(o.version)}`:'Tippen und Namen suchen'}</span></div>${TR.length>1?`<button class="xb" data-trdel="${i}" aria-label="Trade entfernen">✕</button>`:''}</div><div class="g3">${inp('q','Anzahl')}${inp('b','Kaufpreis')}${inp('s','Verkaufspreis')}</div><div class="tres" id="tres${i}"></div></div>`;
+    const inp=(k,l,extra)=>`<div><label>${l}</label><div class="ipr"><input type="text" inputmode="numeric" autocomplete="off" data-i="${i}" data-k="${k}" value="${esc(t[k])}">${extra||''}</div></div>`;
+    const ref=t.id?`<button class="rfb" type="button" data-trref="${i}" aria-label="Aktuellen Marktpreis übernehmen" title="Aktuellen Marktpreis übernehmen">↻</button>`:'';
+    return `<div class="trc"><div class="trp" data-pl="${i}"><div class="trimg">${o?cardArt(o,'mini'):'<div class="em2">+</div>'}${o?`<div class="mp" data-mp="${esc(o.id)}"></div>`:''}</div><div class="cn"><b>${o?esc(o.name):'Spieler wählen'}</b><span>${o?`${o.rating} · ${esc(o.version)}`:'Tippen und Namen suchen'}</span></div>${TR.length>1?`<button class="xb" data-trdel="${i}" aria-label="Trade entfernen">✕</button>`:''}</div><div class="g3">${inp('q','Anzahl')}${inp('b','Kaufpreis')}${inp('s','Verkaufspreis',ref)}</div><div class="tres" id="tres${i}"></div></div>`;
   }).join('');
-  trResults();
+  trPrices();trResults();
 }
 /* ---------- Spielersuche (Lupe) ---------- */
 let SRCH_CB=null;
@@ -919,6 +930,7 @@ async function load(){
   if(!ok.length){$('stand').textContent='Preise konnten nicht geladen werden.';renderLeaks();return}
   MAIN={updated:ok.map(x=>x.updated).filter(Boolean).sort().pop()||null,cards:Object.assign({},...ok.map(x=>x.cards||{}))};
   rebuild();rebuildAll();render();renderCheap();renderEvent();renderLeaks();renderTeam();
+  if(!$('trd').hidden){trPrices();trResults()}
   loadTeamData();
 }
 const SEEN_KEY='fc27leakseen';
@@ -960,10 +972,12 @@ $('trClr').onclick=async()=>{
 };
 $('trL').addEventListener('input',e=>{const el=e.target;if(!el.dataset||!el.dataset.k)return;fmtInput(el);TR[+el.dataset.i][el.dataset.k]=el.value;saveTR();trResults()});
 $('trL').addEventListener('click',e=>{
+  const rf=e.target.closest&&e.target.closest('[data-trref]');
+  if(rf){const i=+rf.dataset.trref,pr=TR[i].id?priceOf(TR[i].id):null;if(pr){TR[i].s=dots(pr);saveTR();const el=document.querySelector(`#trL input[data-i="${i}"][data-k="s"]`);if(el)el.value=TR[i].s;trResults()}else toast('Für diese Karte gibt es keinen Marktpreis');return}
   const d=e.target.closest&&e.target.closest('[data-trdel]');
   if(d){TR.splice(+d.dataset.trdel,1);if(!TR.length)TR=[{id:null,q:'',b:'',s:''}];saveTR();renderTrades();return}
   const pl=e.target.closest&&e.target.closest('[data-pl]');
-  if(pl){const i=+pl.dataset.pl;openSearch(id=>{TR[i].id=id;const pr=priceOf(id);if(pr&&!TR[i].b)TR[i].b=dots(pr);saveTR();renderTrades()})}
+  if(pl){const i=+pl.dataset.pl;openSearch(id=>{TR[i].id=id;const pr=priceOf(id);if(pr)TR[i].s=dots(pr);saveTR();renderTrades()})}
 });
 $('sQ').oninput=searchList;
 $('srch').onclick=e=>{if(e.target.closest&&e.target.closest('[data-close]'))closeSheetId('srch')};
